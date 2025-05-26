@@ -129,7 +129,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       'nomination_complete': '⚖️',
       'nomination_result': '⚖️',
       'voting': '🗳️',
-      'execution': '💀',
+      'execution': '⚔️',
       'player_death': '💀',
       'message': '💬',
       'storyteller_info': '📢',
@@ -471,7 +471,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
         return (
           <div className="event-details">
             <div className="execution-summary">
-              <span className="execution-icon">💀</span>
+              <span className="execution-icon">⚔️</span>
               <span className="executed-player">{formatPlayerName(event.metadata.executed_player, event)}</span>
               <span className="execution-label">has died</span>
             </div>
