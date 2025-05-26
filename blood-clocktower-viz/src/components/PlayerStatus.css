@@ -1,0 +1,156 @@
+.player-status {
+  padding: 20px;
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.player-status h2 {
+  margin-bottom: 16px;
+  color: #ffffff;
+  font-size: 1.5rem;
+}
+
+.teams-container {
+  display: flex;
+  gap: 20px;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .teams-container {
+    flex-direction: row;
+  }
+}
+
+.team-column {
+  flex: 1;
+  background-color: #3a3a3a;
+  border-radius: 8px;
+  padding: 16px;
+  border: 2px solid #4a4a4a;
+}
+
+.good-team {
+  border-color: #2196F3;
+  background-color: rgba(33, 150, 243, 0.05);
+}
+
+.evil-team {
+  border-color: #F44336;
+  background-color: rgba(244, 67, 54, 0.05);
+}
+
+.team-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #4a4a4a;
+}
+
+.team-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.team-count {
+  font-size: 0.9rem;
+  color: #aaa;
+  background-color: #4a4a4a;
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.player-card {
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  padding: 12px;
+  border: 2px solid #4a4a4a;
+  transition: all 0.3s ease;
+}
+
+.player-card.dead {
+  opacity: 0.6;
+  border-color: #666;
+}
+
+.player-card:hover {
+  border-color: #666;
+  transform: translateY(-2px);
+}
+
+.player-name {
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+
+.player-character {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.player-status-indicators {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.status-indicator {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-indicator.alive {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.status-indicator.dead {
+  background-color: #F44336;
+  color: white;
+}
+
+.dead-vote-used {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #FF9800;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nominatable {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #2196F3;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.no-players {
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+} 
