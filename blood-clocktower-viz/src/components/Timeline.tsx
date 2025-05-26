@@ -358,105 +358,113 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
           </div>
         );
       case 'slayer_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} tried to slay {formatPlayerName(event.metadata.target, event)}
+                {event.metadata.success !== undefined && (
+                  <span className={`result-indicator ${event.metadata.success ? 'success' : 'failed'}`}>
+                    {event.metadata.success ? ' and succeeded' : ' but failed'}
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+        );
       case 'poisoner_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} poisoned {formatPlayerName(event.metadata.target, event)}
+                {event.metadata.success !== undefined && (
+                  <span className={`result-indicator ${event.metadata.success ? 'success' : 'failed'}`}>
+                    {event.metadata.success ? '' : ' but it failed'}
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+        );
       case 'imp_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} attacked {formatPlayerName(event.metadata.target, event)}
+                {event.metadata.success !== undefined && (
+                  <span className={`result-indicator ${event.metadata.success ? 'success' : 'failed'}`}>
+                    {event.metadata.success ? ' and killed them' : ' but they survived'}
+                  </span>
+                )}
+              </span>
             </div>
-            {event.metadata.target && (
-              <div className="power-info">
-                <span className="info-label">Target:</span>
-                <span className="info-value">{formatPlayerName(event.metadata.target, event)}</span>
-              </div>
-            )}
-            {event.metadata.success !== undefined && (
-              <div className="power-result">
-                <span className="result-label">Result:</span>
-                <span className={`result-value ${event.metadata.success ? 'yes' : 'no'}`}>
-                  {event.metadata.success ? '✅ Success' : '❌ Failed'}
-                </span>
-              </div>
-            )}
           </div>
         );
       case 'empath_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">💜</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} checked their neighbors{' '}
+                {event.metadata.neighbors && event.metadata.neighbors.map((neighbor: string, index: number) => (
+                  <span key={index}>
+                    {formatPlayerName(neighbor, event)}
+                    {index < event.metadata.neighbors.length - 1 ? ' and ' : ''}
+                  </span>
+                ))}
+                {event.metadata.evil_count !== undefined && (
+                  <span className="result-indicator">
+                    {' '}and learned that {event.metadata.evil_count} of them {event.metadata.evil_count === 1 ? 'is' : 'are'} evil
+                  </span>
+                )}
+              </span>
             </div>
-            {event.metadata.neighbors && (
-              <div className="power-info">
-                <span className="info-label">Neighbors:</span>
-                <span className="info-value">
-                  {event.metadata.neighbors.map((neighbor: string, index: number) => (
-                    <span key={index}>
-                      {formatPlayerName(neighbor, event)}
-                      {index < event.metadata.neighbors.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            )}
-            {event.metadata.evil_count !== undefined && (
-              <div className="power-result">
-                <span className="result-label">Evil Count:</span>
-                <span className="result-value">{event.metadata.evil_count}</span>
-              </div>
-            )}
           </div>
         );
       case 'fortuneteller_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">🔮</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} chose{' '}
+                {event.metadata.choices && event.metadata.choices.map((choice: string, index: number) => (
+                  <span key={index}>
+                    {formatPlayerName(choice, event)}
+                    {index < event.metadata.choices.length - 1 ? ' and ' : ''}
+                  </span>
+                ))}
+                {event.metadata.result && (
+                  <span className={`result-indicator ${event.metadata.result.toLowerCase()}`}>
+                    {event.metadata.result === 'yes' 
+                      ? ' and learned that one of them is the Demon' 
+                      : ' and learned that neither is the Demon'}
+                  </span>
+                )}
+              </span>
             </div>
-            {event.metadata.choices && (
-              <div className="power-info">
-                <span className="info-label">Checked:</span>
-                <span className="info-value">
-                  {event.metadata.choices.map((choice: string, index: number) => (
-                    <span key={index}>
-                      {formatPlayerName(choice, event)}
-                      {index < event.metadata.choices.length - 1 ? ' & ' : ''}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            )}
-            {event.metadata.result && (
-              <div className="power-result">
-                <span className="result-label">Result:</span>
-                <span className={`result-value ${event.metadata.result.toLowerCase()}`}>
-                  {event.metadata.result === 'yes' ? '✅ YES - One is the Demon' : '❌ NO - Neither is the Demon'}
-                </span>
-              </div>
-            )}
           </div>
         );
       case 'spy_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">🕵️</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} viewed the Storyteller's grimoire and learned all game information
+                {event.metadata.info_sections && (
+                  <span className="result-indicator">
+                    {' '}(viewed: {event.metadata.info_sections})
+                  </span>
+                )}
+              </span>
             </div>
-            <div className="power-info">
-              <span className="info-label">Grimoire Access:</span>
-              <span className="info-value">Full access to all game information</span>
-            </div>
-            {event.metadata.info_sections && (
-              <div className="power-result">
-                <span className="result-label">Sections viewed:</span>
-                <span className="result-value">{event.metadata.info_sections}</span>
-              </div>
-            )}
           </div>
         );
       case 'execution':
@@ -491,18 +499,13 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       case 'undertaker_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-            </div>
-            <div className="power-info">
-              <span className="info-label">Executed Player:</span>
-              <span className="info-value">{formatPlayerName(event.metadata.executed_player, event)}</span>
-            </div>
-            <div className="power-info">
-              <span className="info-label">Learned Character:</span>
-              <span className={`info-value character-name ${isEvilCharacter(event.metadata.learned_character) ? 'evil' : 'good'}`}>
-                {event.metadata.learned_character}
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned {formatPlayerName(event.metadata.executed_player, event)} was the{' '}
+                <span className={`character-name ${isEvilCharacter(event.metadata.learned_character) ? 'evil' : 'good'}`}>
+                  {event.metadata.learned_character}
+                </span>
               </span>
             </div>
           </div>
@@ -510,32 +513,89 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       case 'chef_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-            </div>
-            <div className="power-info">
-              <span className="info-label">Adjacent Evil Pairs:</span>
-              <span className="info-value">{event.metadata.evil_pairs}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned there {event.metadata.evil_pairs === 1 ? 'is' : 'are'}{' '}
+                <span className="result-indicator">{event.metadata.evil_pairs} pair{event.metadata.evil_pairs !== 1 ? 's' : ''}</span> of evil players sitting next to each other
+              </span>
             </div>
           </div>
         );
       case 'washerwoman_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned information about a Townsfolk character
+              </span>
+            </div>
+          </div>
+        );
       case 'librarian_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned information about an Outsider character
+              </span>
+            </div>
+          </div>
+        );
       case 'investigator_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned information about a Minion character
+              </span>
+            </div>
+          </div>
+        );
       case 'monk_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} chose someone to protect from the Demon
+              </span>
+            </div>
+          </div>
+        );
       case 'ravenkeeper_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} learned the character of a chosen player
+              </span>
+            </div>
+          </div>
+        );
       case 'butler_power':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} chose their master
+              </span>
+            </div>
+          </div>
+        );
       case 'virgin_power':
         return (
           <div className="event-details">
-            <div className="power-header">
+            <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
-              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-            </div>
-            <div className="power-info">
-              <span className="info-label">Power activated</span>
-              <span className="info-value">Information received privately</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} was nominated and their virgin power activated
+              </span>
             </div>
           </div>
         );

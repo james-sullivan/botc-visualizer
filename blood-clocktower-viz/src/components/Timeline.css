@@ -733,6 +733,47 @@
   border-radius: 3px;
 }
 
+/* Narrative description styles */
+.narrative-description {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.narrative-description .power-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.narrative-text {
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.result-indicator {
+  font-weight: 600;
+}
+
+.result-indicator.success {
+  color: #4CAF50;
+}
+
+.result-indicator.failed {
+  color: #f44336;
+}
+
+.result-indicator.yes {
+  color: #4CAF50;
+}
+
+.result-indicator.no {
+  color: #ff9800;
+}
+
 .result-label {
   font-size: 0.8rem;
   color: #aaa;
