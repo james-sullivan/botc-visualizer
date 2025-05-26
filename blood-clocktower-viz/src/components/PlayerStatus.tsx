@@ -43,7 +43,28 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players }) => {
             VOTED
           </span>
         )}
+        {player.drunk && (
+          <span className="status-drunk" title="This player is drunk">
+            DRUNK
+          </span>
+        )}
+        {player.poisoned && (
+          <span className="status-poisoned" title="This player is poisoned">
+            POISONED
+          </span>
+        )}
       </div>
+      {player.drunk && player.drunk_character && (
+        <div className="drunk-character-info">
+          <span className="drunk-label">Thinks they are:</span>
+          <span 
+            className="drunk-character"
+            style={{ color: getTeamColor(player.drunk_character) }}
+          >
+            {player.drunk_character}
+          </span>
+        </div>
+      )}
     </div>
   );
 

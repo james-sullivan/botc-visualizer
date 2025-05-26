@@ -1078,4 +1078,300 @@
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 0.8rem;
-} 
+}
+
+/* Notes Update Styles */
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #4a4a4a;
+}
+
+.notes-icon {
+  font-size: 1.3rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.notes-player {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.notes-action {
+  color: #bbb;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.notes-summary {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.notes-details {
+  margin-top: 8px;
+}
+
+.notes-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+  border-radius: 6px;
+  border: 1px solid #5a5a5a;
+  color: #ffffff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notes-toggle:hover {
+  background: linear-gradient(135deg, #5a5a5a 0%, #4a4a4a 100%);
+  border-color: #FF9800;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2);
+}
+
+.notes-toggle-text {
+  font-weight: 500;
+}
+
+.notes-toggle-arrow {
+  transition: transform 0.2s ease;
+  font-size: 0.8rem;
+}
+
+.notes-details[open] .notes-toggle-arrow {
+  transform: rotate(180deg);
+}
+
+.notes-content {
+  margin-top: 8px;
+  padding: 16px;
+  background-color: #2a2a2a;
+  border-radius: 6px;
+  border-left: 4px solid #FF9800;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.notes-text {
+  color: #e8e8e8;
+  line-height: 1.6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 0.9rem;
+}
+
+.notes-line {
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  padding-left: 0;
+  line-height: 1.4;
+}
+
+.notes-line:last-child {
+  margin-bottom: 0;
+}
+
+.notes-line[data-bullet="true"] {
+  line-height: 1.5;
+}
+
+/* Style bullet points in notes */
+.notes-line[data-bullet="true"]:before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #FF9800;
+  border-radius: 50%;
+  margin-right: 10px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.notes-line[data-bullet="true"] {
+  display: flex;
+  align-items: flex-start;
+  padding-left: 4px;
+}
+
+/* Improve readability for bullet point lines */
+.notes-line {
+  position: relative;
+}
+
+.notes-line:empty {
+  margin-bottom: 4px;
+}
+
+/* Add some spacing for nested content */
+.notes-line[data-bullet="true"] + .notes-line:not([data-bullet="true"]) {
+  margin-left: 20px;
+  margin-top: -4px;
+  margin-bottom: 12px;
+  color: #ccc;
+  font-size: 0.85rem;
+}
+
+/* Combined Notes Styles */
+.combined-notes-container {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.combined-notes-container .notes-details {
+  margin-top: 0;
+}
+
+.combined-notes-container .notes-toggle {
+  background: linear-gradient(135deg, #3a3a3a 0%, #2a2a2a 100%);
+  border-color: #4a4a4a;
+}
+
+.combined-notes-container .notes-toggle:hover {
+  background: linear-gradient(135deg, #4a4a4a 0%, #3a3a3a 100%);
+  border-color: #FF9800;
+}
+
+/* Death Announcement Styles */
+.death-announcement-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #5a5a5a;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.death-announcement-icon {
+  font-size: 1.3rem;
+}
+
+.death-announcement-title {
+  color: #f44336;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.death-announcement-summary {
+  background-color: #4a4a4a;
+  border-left: 3px solid #f44336;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.dead-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dead-players-label {
+  color: #aaa;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.dead-players-names {
+  color: #fff;
+  font-weight: 600;
+}
+
+.dead-player-name {
+  color: #f44336;
+  font-weight: 700;
+}
+
+/* Minion Info Styles */
+.minion-info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #5a5a5a;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.minion-info-icon {
+  font-size: 1.3rem;
+}
+
+.minion-info-title {
+  color: #f44336;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.minion-info-content {
+  background-color: #4a4a4a;
+  border-left: 3px solid #f44336;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.demon-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.demon-name {
+  color: #f44336;
+  font-weight: 700;
+}
+
+.demon-character {
+  color: #f44336;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Demon Info Styles */
+.demon-info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid #5a5a5a;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.demon-info-icon {
+  font-size: 1.3rem;
+}
+
+.demon-info-title {
+  color: #b71c1c;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.demon-info-content {
+  background-color: #4a4a4a;
+  border-left: 3px solid #b71c1c;
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.not-in-play-info,
+.minions-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.not-in-play-list,
+.minions-list {
+  color: #fff;
+  font-weight: 600;
+}

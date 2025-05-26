@@ -61,6 +61,7 @@ function App() {
   }
 
   const currentEvent = gameEvents[currentEventIndex];
+  const currentGameState = currentEvent ? (currentEvent.game_state || currentEvent.public_game_state) : undefined;
   
   // Safety check to ensure currentEvent exists
   if (!currentEvent) {
@@ -97,30 +98,40 @@ function App() {
         
         <div className="player-section">
           <PlayerStatus 
-            players={currentEvent.public_game_state?.player_state || []} 
+            players={currentGameState?.player_state || []} 
           />
           
           <div className="nomination-status">
             <h3>Nomination Status</h3>
-            {currentEvent.public_game_state?.nominatable_players && currentEvent.public_game_state.nominatable_players.length > 0 ? (
+            {currentGameState?.nominations_open ? (
               <>
-                <div className="nomination-info">
-                  <div className="nominatable-count">
-                    {currentEvent.public_game_state.nominatable_players.length} players can be nominated
-                  </div>
-                  <div className="nominatable-list">
-                    {currentEvent.public_game_state.nominatable_players.join(', ')}
-                  </div>
+                <div className="nominations-open-indicator">
+                  <span className="status-icon">🗳️</span>
+                  <span className="status-text">Nominations are open</span>
                 </div>
-                {currentEvent.public_game_state?.chopping_block && (
+                {currentGameState?.nominatable_players && currentGameState.nominatable_players.length > 0 ? (
+                  <div className="nomination-info">
+                    <div className="nominatable-count">
+                      {currentGameState.nominatable_players.length} players can be nominated
+                    </div>
+                    <div className="nominatable-list">
+                      {currentGameState.nominatable_players.join(', ')}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="no-nominatable-players">
+                    No players are currently nominatable
+                  </div>
+                )}
+                {currentGameState?.chopping_block && (
                   <div className="chopping-block-info">
                     <div className="chopping-block-header">On the Chopping Block:</div>
                     <div className="nominee-info">
                       <span className="nominee-name">
-                        {currentEvent.public_game_state.chopping_block.nominee}
+                        {currentGameState.chopping_block.nominee}
                       </span>
                       <span className="vote-count">
-                        ({currentEvent.public_game_state.chopping_block.votes} votes)
+                        ({currentGameState.chopping_block.votes} votes)
                       </span>
                     </div>
                   </div>
@@ -128,7 +139,8 @@ function App() {
               </>
             ) : (
               <div className="nominations-closed">
-                Nominations have not been opened yet
+                <span className="status-icon">🔒</span>
+                <span className="status-text">Nominations are closed</span>
               </div>
             )}
           </div>

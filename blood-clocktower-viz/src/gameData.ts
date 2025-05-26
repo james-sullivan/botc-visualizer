@@ -2,7 +2,7 @@ import { GameEvent } from './types';
 
 export async function loadGameEvents(): Promise<GameEvent[]> {
   try {
-    const response = await fetch(`/game_log_20250525_161301.jsonl?t=${Date.now()}`);
+    const response = await fetch(`/game_log_20250526_152804.jsonl?t=${Date.now()}`);
     const text = await response.text();
     const lines = text.trim().split('\n');
     const rawEvents = lines.map(line => JSON.parse(line) as GameEvent);
@@ -21,7 +21,6 @@ function processEvents(events: GameEvent[]): GameEvent[] {
   const filteredEvents = events.filter(event => {
     const ignoredEventTypes = [
       'player_pass',
-      'notes_update',
       'info_broadcast',
       'player_setup', // This is usually just character assignment
       'phase_change',  // Remove phase_change events as they're redundant with phase headers
@@ -41,16 +40,106 @@ function processEvents(events: GameEvent[]): GameEvent[] {
   console.log('Filtered events:', filteredEvents.length);
   console.log('Event types after filtering:', Array.from(new Set(filteredEvents.map(e => e.event_type))).sort());
 
-  // Group consecutive voting events
+  // Group notes_update events by phase and combine nomination/nomination_result events
   const processedEvents: GameEvent[] = [];
-  let i = 0;
+  const notesEventsByPhase = new Map<string, GameEvent[]>();
+  const processedNotesPhases = new Set<string>();
 
-  while (i < filteredEvents.length) {
-    const currentEvent = filteredEvents[i];
+  // First pass: collect all notes events by phase
+  for (const event of filteredEvents) {
+    if (event.event_type === 'notes_update') {
+      const phaseKey = `${event.round_number}-${event.phase}`;
+      if (!notesEventsByPhase.has(phaseKey)) {
+        notesEventsByPhase.set(phaseKey, []);
+      }
+      notesEventsByPhase.get(phaseKey)!.push(event);
+    }
+  }
 
-    // Just add all events without combining nominations and results
-    processedEvents.push(currentEvent);
-    i++;
+  // Second pass: process events and combine notes and nominations
+  for (let i = 0; i < filteredEvents.length; i++) {
+    const event = filteredEvents[i];
+    
+    if (event.event_type === 'notes_update') {
+      const phaseKey = `${event.round_number}-${event.phase}`;
+      
+      // Only process the first notes event in each phase
+      if (!processedNotesPhases.has(phaseKey)) {
+        processedNotesPhases.add(phaseKey);
+        const notesEvents = notesEventsByPhase.get(phaseKey)!;
+        
+        // Create a combined notes event
+        const combinedNotesEvent: GameEvent = {
+          ...event,
+          event_type: 'notes_update_combined',
+          description: `${notesEvents.length} players updated their notes`,
+          participants: notesEvents.map(e => e.metadata.player_name),
+          metadata: {
+            notes_updates: notesEvents.map(e => ({
+              player_name: e.metadata.player_name,
+              character: e.metadata.character,
+              notes: e.metadata.notes,
+              timestamp: e.timestamp
+            })),
+            count: notesEvents.length
+          },
+          // Ensure we have the public_game_state for character lookup
+          public_game_state: event.public_game_state
+        };
+
+        processedEvents.push(combinedNotesEvent);
+      }
+      // Skip subsequent notes events in the same phase
+    } else if (event.event_type === 'nomination') {
+      // Look for the immediately following nomination_result event
+      const nextEvent = filteredEvents[i + 1];
+      
+      if (nextEvent && 
+          nextEvent.event_type === 'nomination_result' && 
+          nextEvent.metadata.nominator === event.metadata.nominator &&
+          nextEvent.metadata.nominee === event.metadata.nominee) {
+        
+        // Create a combined nomination event
+        const combinedNominationEvent: GameEvent = {
+          ...event,
+          event_type: 'nomination_complete',
+          description: `${event.metadata.nominator} nominated ${event.metadata.nominee} for execution`,
+          metadata: {
+            ...event.metadata,
+            ...nextEvent.metadata,
+            // Preserve both public and private reasoning from nomination event
+            public_reasoning: event.metadata.public_reasoning,
+            private_reasoning: event.metadata.private_reasoning,
+            // Add result information from nomination_result event
+            result: nextEvent.metadata.result,
+            votes: nextEvent.metadata.votes,
+            vote_details: nextEvent.metadata.vote_details,
+            required_to_nominate: nextEvent.metadata.required_to_nominate,
+            required_to_tie: nextEvent.metadata.required_to_tie
+          }
+        };
+        
+        processedEvents.push(combinedNominationEvent);
+      } else {
+        // If no matching result found immediately after, keep the original nomination event
+        processedEvents.push(event);
+      }
+    } else if (event.event_type === 'nomination_result') {
+      // Check if this result was already combined with the previous nomination
+      const prevEvent = filteredEvents[i - 1];
+      
+      if (!(prevEvent && 
+            prevEvent.event_type === 'nomination' && 
+            prevEvent.metadata.nominator === event.metadata.nominator &&
+            prevEvent.metadata.nominee === event.metadata.nominee)) {
+        // Keep standalone nomination_result events if no corresponding nomination found immediately before
+        processedEvents.push(event);
+      }
+      // Otherwise skip this event as it was already combined
+    } else {
+      // Add all other events without combining
+      processedEvents.push(event);
+    }
   }
 
   console.log('Final processed events:', processedEvents.length);
@@ -60,12 +149,6 @@ function processEvents(events: GameEvent[]): GameEvent[] {
   const votingRoundEvents = processedEvents.filter(e => e.event_type === 'voting_round');
   if (votingRoundEvents.length > 0) {
     console.error('ERROR: Found voting_round events in final output:', votingRoundEvents);
-  }
-  
-  // Debug: Check for any nomination_complete events in final output
-  const nominationCompleteEvents = processedEvents.filter(e => e.event_type === 'nomination_complete');
-  if (nominationCompleteEvents.length > 0) {
-    console.error('ERROR: Found nomination_complete events in final output:', nominationCompleteEvents);
   }
   
   return processedEvents;
@@ -161,6 +244,11 @@ export function getEventTypeColor(eventType: string): string {
     'butler_power': '#FF9800',
     'virgin_power': '#FFEB3B',
     'scarlet_woman': '#AD1457',
+    'notes_update': '#FF9800',
+    'notes_update_combined': '#9C27B0',
+    'death_announcement': '#F44336',
+    'minion_info': '#F44336',
+    'demon_info': '#B71C1C',
   };
   return colors[eventType] || '#757575';
 }

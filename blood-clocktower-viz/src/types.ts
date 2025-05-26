@@ -3,6 +3,9 @@ export interface PlayerState {
   alive: boolean;
   used_dead_vote: boolean;
   character: string;
+  drunk?: boolean;
+  poisoned?: boolean;
+  drunk_character?: string;
 }
 
 export interface PublicGameState {
@@ -14,6 +17,7 @@ export interface PublicGameState {
     votes: number;
   } | null;
   nominatable_players: string[];
+  nominations_open?: boolean;
 }
 
 export interface GameEvent {
@@ -24,7 +28,8 @@ export interface GameEvent {
   description: string;
   participants: string[];
   metadata: Record<string, any>;
-  public_game_state: PublicGameState;
+  public_game_state?: PublicGameState;
+  game_state?: PublicGameState;
 }
 
 export interface VotingDetails {

@@ -148,6 +148,47 @@
   letter-spacing: 0.5px;
 }
 
+.status-drunk {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #9C27B0;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-poisoned {
+  font-size: 0.7rem;
+  font-weight: bold;
+  background-color: #9C27B0;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.drunk-character-info {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background-color: rgba(156, 39, 176, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #9C27B0;
+}
+
+.drunk-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin-right: 6px;
+}
+
+.drunk-character {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .no-players {
   color: #aaa;
   font-style: italic;

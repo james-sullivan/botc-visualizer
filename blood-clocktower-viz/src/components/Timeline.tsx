@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { GameEvent } from '../types';
-import { getEventTypeColor, getPhaseColor, getPhaseIndentation, isEvilCharacter } from '../gameData';
+import { getPhaseColor, getPhaseIndentation, isEvilCharacter } from '../gameData';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -26,7 +26,8 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
 
   // Helper function to format player names with character info
   const formatPlayerName = (playerName: string, event: GameEvent) => {
-    const playerState = event.public_game_state?.player_state?.find(p => p.name === playerName);
+    const gameState = event.game_state || event.public_game_state;
+    const playerState = gameState?.player_state?.find(p => p.name === playerName);
     if (playerState?.character) {
       const isEvil = isEvilCharacter(playerState.character);
       return (
@@ -124,16 +125,17 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       'round_start': '🔄',
       'phase_change': '🌙',
       'nomination': '👆',
+      'nominations_open': '🗳️',
       'nomination_complete': '⚖️',
       'nomination_result': '⚖️',
       'voting': '🗳️',
-      'execution': '⚔️',
+      'execution': '💀',
       'player_death': '💀',
       'message': '💬',
       'storyteller_info': '📢',
       'game_end': '🏁',
-      'slayer_power': '⚡',
-      'poisoner_power': '☠️',
+      'slayer_power': '🏹',
+      'poisoner_power': '🧪',
       'imp_power': '👹',
       'empath_power': '💜',
       'fortuneteller_power': '🔮',
@@ -149,8 +151,43 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       'virgin_power': '👸',
       'scarlet_woman': '👩‍🦰',
       'player_setup': '🎭',
+      'notes_update': '📝',
+      'notes_update_combined': '📝',
+      'death_announcement': '💀',
+      'minion_info': '👹',
+      'demon_info': '😈',
     };
     return icons[eventType] || '📝';
+  };
+
+  const getEventIconBackgroundColor = (eventType: string) => {
+    // Good team powers (blue)
+    const goodPowers = [
+      'slayer_power', 'empath_power', 'fortuneteller_power', 'washerwoman_power',
+      'librarian_power', 'investigator_power', 'chef_power', 'monk_power',
+      'ravenkeeper_power', 'undertaker_power', 'butler_power', 'virgin_power'
+    ];
+    
+    // Evil team powers (red)
+    const evilPowers = [
+      'poisoner_power', 'imp_power', 'spy_power', 'scarlet_woman',
+      'minion_info', 'demon_info'
+    ];
+    
+    // Setup events (green)
+    const setupEvents = [
+      'game_setup', 'game_start', 'round_start', 'player_setup'
+    ];
+    
+    if (goodPowers.includes(eventType)) {
+      return '#2196F3'; // Blue
+    } else if (evilPowers.includes(eventType)) {
+      return '#F44336'; // Red
+    } else if (setupEvents.includes(eventType)) {
+      return '#4CAF50'; // Green
+    } else {
+      return '#757575'; // Grey
+    }
   };
 
   const renderEventDetails = (event: GameEvent) => {
@@ -163,6 +200,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
               <span className="setup-text">
                 Game Setup: {event.metadata.player_count} players
                 {event.metadata.script && ` • ${event.metadata.script}`}
+                {event.metadata.model && ` • Model: ${event.metadata.model}`}
               </span>
             </div>
           </div>
@@ -322,13 +360,11 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       case 'slayer_power':
       case 'poisoner_power':
       case 'imp_power':
-        const powerType = event.event_type.replace('_power', '').replace(/^\w/, c => c.toUpperCase());
         return (
           <div className="event-details">
             <div className="power-header">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-              <span className="power-type">{powerType}</span>
             </div>
             {event.metadata.target && (
               <div className="power-info">
@@ -352,7 +388,6 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="power-header">
               <span className="power-icon">💜</span>
               <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-              <span className="power-type">Empath</span>
             </div>
             {event.metadata.neighbors && (
               <div className="power-info">
@@ -381,7 +416,6 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="power-header">
               <span className="power-icon">🔮</span>
               <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-              <span className="power-type">Fortune Teller</span>
             </div>
             {event.metadata.choices && (
               <div className="power-info">
@@ -412,7 +446,6 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="power-header">
               <span className="power-icon">🕵️</span>
               <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-              <span className="power-type">Spy</span>
             </div>
             <div className="power-info">
               <span className="info-label">Grimoire Access:</span>
@@ -430,41 +463,75 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
         return (
           <div className="event-details">
             <div className="execution-summary">
-              <span className="execution-icon">⚔️</span>
+              <span className="execution-icon">💀</span>
               <span className="executed-player">{formatPlayerName(event.metadata.executed_player, event)}</span>
-              <span className="execution-label">has been executed</span>
+              <span className="execution-label">has died</span>
             </div>
           </div>
         );
       case 'player_death':
         const killedByDemon = event.metadata.killed_by_demon;
+        
+        // Check if the previous event was an execution to determine death cause
+        const currentEventIndex = events.findIndex(e => e === event);
+        const previousEvent = currentEventIndex > 0 ? events[currentEventIndex - 1] : null;
+        const wasExecuted = previousEvent?.event_type === 'execution';
+        
         return (
           <div className="event-details">
             <div className="death-summary">
               <span className="death-icon">{killedByDemon ? '👹' : '💀'}</span>
               <span className="dead-player">{formatPlayerName(event.metadata.player_name, event)}</span>
               <span className="death-cause">
-                {killedByDemon ? 'killed by Demon' : 'died by execution'}
+                {killedByDemon ? 'killed by Demon' : wasExecuted ? 'died by execution' : 'died'}
               </span>
+            </div>
+          </div>
+        );
+      case 'undertaker_power':
+        return (
+          <div className="event-details">
+            <div className="power-header">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+            </div>
+            <div className="power-info">
+              <span className="info-label">Executed Player:</span>
+              <span className="info-value">{formatPlayerName(event.metadata.executed_player, event)}</span>
+            </div>
+            <div className="power-info">
+              <span className="info-label">Learned Character:</span>
+              <span className={`info-value character-name ${isEvilCharacter(event.metadata.learned_character) ? 'evil' : 'good'}`}>
+                {event.metadata.learned_character}
+              </span>
+            </div>
+          </div>
+        );
+      case 'chef_power':
+        return (
+          <div className="event-details">
+            <div className="power-header">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+            </div>
+            <div className="power-info">
+              <span className="info-label">Adjacent Evil Pairs:</span>
+              <span className="info-value">{event.metadata.evil_pairs}</span>
             </div>
           </div>
         );
       case 'washerwoman_power':
       case 'librarian_power':
       case 'investigator_power':
-      case 'chef_power':
       case 'monk_power':
       case 'ravenkeeper_power':
-      case 'undertaker_power':
       case 'butler_power':
       case 'virgin_power':
-        const powerName = event.event_type.replace('_power', '').replace(/^\w/, c => c.toUpperCase());
         return (
           <div className="event-details">
             <div className="power-header">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="power-player">{formatPlayerName(event.metadata.player_name, event)}</span>
-              <span className="power-type">{powerName}</span>
             </div>
             <div className="power-info">
               <span className="info-label">Power activated</span>
@@ -476,20 +543,26 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
         const isPrivateMessage = event.metadata.recipients && event.metadata.recipients.length === 1;
         const isStoryteller = event.metadata.sender === 'Storyteller';
         
-        // Check if it's everyone except one player (excluding sender)
-        const allPlayers = event.public_game_state?.player_state?.map(p => p.name) || [];
+        // Get all players and message details
+        const gameState = event.game_state || event.public_game_state;
+        const allPlayers = gameState?.player_state?.map(p => p.name) || [];
         const recipients = event.metadata.recipients || [];
         const sender = event.metadata.sender;
         
+        // Calculate expected recipients for "Everyone" (all players except sender)
+        const expectedEveryoneRecipients = allPlayers.filter(player => player !== sender);
+        
         // Find players who didn't receive the message (excluding the sender)
-        const missingPlayers = allPlayers.filter(player => 
-          !recipients.includes(player) && player !== sender
+        const missingPlayers = expectedEveryoneRecipients.filter(player => 
+          !recipients.includes(player)
         );
         
+        // Determine message type based on recipients
+        const isEveryone = missingPlayers.length === 0 && recipients.length === expectedEveryoneRecipients.length;
         const isEveryoneButOne = missingPlayers.length === 1;
         const missingPlayer = isEveryoneButOne ? missingPlayers[0] : null;
         
-        const isPublicMessage = event.metadata.recipients && event.metadata.recipients.length > 1 && !isEveryoneButOne;
+        const isPublicMessage = recipients.length > 1 && !isEveryone && !isEveryoneButOne;
         
         return (
           <div className="event-details">
@@ -499,8 +572,8 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
                   {event.metadata.sender === 'Storyteller' ? 'Storyteller' : formatPlayerName(event.metadata.sender, event)}
                 </span>
                 <span className="message-arrow">→</span>
-                <span className={`recipients ${isPrivateMessage ? 'private' : (isPublicMessage || isEveryoneButOne) ? 'public' : ''}`}>
-                  {isPublicMessage ? <span className="everyone">Everyone</span> : 
+                <span className={`recipients ${isPrivateMessage ? 'private' : (isPublicMessage || isEveryone || isEveryoneButOne) ? 'public' : ''}`}>
+                  {isEveryone ? <span className="everyone">Everyone</span> :
                    isEveryoneButOne && missingPlayer ? (
                      <><span className="everyone">Everyone</span> <span className="but-text">but</span> {formatPlayerName(missingPlayer, event)}</>
                    ) :
@@ -515,6 +588,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
               <div className="message-type">
                 {isStoryteller ? '📢 Storyteller Info' : 
                  isPrivateMessage ? '🔒 Private Message' : 
+                 isEveryone ? '📢 Public Message (Everyone)' :
                  isEveryoneButOne ? '📢 Public Message (Excluding One)' :
                  isPublicMessage ? '📢 Public Message' : '💬 Message'}
               </div>
@@ -529,7 +603,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       case 'game_end':
         const winner = event.metadata.winner;
         const apiCostSummary = event.metadata.api_cost_summary;
-        const gameStats = event.metadata.game_stats;
+        const gameStats = event.metadata.game_statistics;
         
         return (
           <div className="event-details">
@@ -537,7 +611,6 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
               <span className="event-title-text">🏁 Game End</span>
             </div>
             <div className="game-end-summary">
-              <span className="game-end-icon">🏁</span>
               <span className={`winner-team ${winner?.toLowerCase()}`}>
                 {winner} Team Wins!
               </span>
@@ -553,22 +626,40 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
                       <span className="stat-value">{gameStats.total_rounds}</span>
                     </div>
                   )}
-                  {gameStats.total_nominations && (
+                  {gameStats.total_events && (
+                    <div className="stat-item">
+                      <span className="stat-label">Total Events:</span>
+                      <span className="stat-value">{gameStats.total_events}</span>
+                    </div>
+                  )}
+                  {gameStats.events_by_type?.nomination && (
                     <div className="stat-item">
                       <span className="stat-label">Total Nominations:</span>
-                      <span className="stat-value">{gameStats.total_nominations}</span>
+                      <span className="stat-value">{gameStats.events_by_type.nomination}</span>
                     </div>
                   )}
-                  {gameStats.total_executions && (
+                  {gameStats.events_by_type?.message && (
+                    <div className="stat-item">
+                      <span className="stat-label">Total Messages:</span>
+                      <span className="stat-value">{gameStats.events_by_type.message}</span>
+                    </div>
+                  )}
+                  {gameStats.events_by_type?.execution && (
                     <div className="stat-item">
                       <span className="stat-label">Total Executions:</span>
-                      <span className="stat-value">{gameStats.total_executions}</span>
+                      <span className="stat-value">{gameStats.events_by_type.execution}</span>
                     </div>
                   )}
-                  {gameStats.game_duration && (
+                  {gameStats.events_by_type?.voting && (
                     <div className="stat-item">
-                      <span className="stat-label">Game Duration:</span>
-                      <span className="stat-value">{gameStats.game_duration}</span>
+                      <span className="stat-label">Total Votes:</span>
+                      <span className="stat-value">{gameStats.events_by_type.voting}</span>
+                    </div>
+                  )}
+                  {gameStats.events_by_type?.notes_update && (
+                    <div className="stat-item">
+                      <span className="stat-label">Notes Updates:</span>
+                      <span className="stat-value">{gameStats.events_by_type.notes_update}</span>
                     </div>
                   )}
                 </div>
@@ -637,6 +728,182 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="compact-setup">
               <span className="setup-icon">🔄</span>
               <span className="setup-text">Round {event.round_number} - {event.phase} begins</span>
+            </div>
+          </div>
+        );
+      case 'nominations_open':
+        return (
+          <div className="event-details">
+            <div className="compact-setup">
+              <span className="setup-icon">🗳️</span>
+              <span className="setup-text">Nominations are now open</span>
+            </div>
+          </div>
+        );
+      case 'notes_update':
+        return (
+          <div className="event-details">
+            <div className="notes-header">
+              <span className="notes-icon">📝</span>
+              <span className="notes-player">{formatPlayerName(event.metadata.player_name, event)}</span>
+              <span className="notes-action">updated their notes</span>
+            </div>
+            <details className="notes-details">
+              <summary className="notes-toggle">
+                <span className="notes-toggle-text">View Notes</span>
+                <span className="notes-toggle-arrow">▼</span>
+              </summary>
+              <div className="notes-content">
+                <div className="notes-text">
+                  {event.metadata.notes.split('\n').map((line: string, index: number) => {
+                    const trimmedLine = line.trim();
+                    const isBulletPoint = trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*');
+                    const cleanLine = isBulletPoint ? trimmedLine.substring(1).trim() : trimmedLine;
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className={`notes-line ${isBulletPoint ? 'bullet-point' : ''}`}
+                        data-bullet={isBulletPoint}
+                      >
+                        {cleanLine}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </details>
+          </div>
+        );
+      case 'notes_update_combined':
+        return (
+          <div className="event-details">
+            <div className="notes-header">
+              <span className="notes-icon">📝</span>
+              <span className="notes-summary">{event.metadata.count} players updated their notes</span>
+            </div>
+            <div className="combined-notes-container">
+              {event.metadata.notes_updates.map((noteUpdate: any, index: number) => {
+                // Format player name with character info directly
+                const formatPlayerNameWithCharacter = (playerName: string, character: string) => {
+                  if (character) {
+                    const isEvil = isEvilCharacter(character);
+                    return (
+                      <>
+                        <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>{playerName}</span>{' '}
+                        <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({character})</span>
+                      </>
+                    );
+                  }
+                  return playerName;
+                };
+                
+                return (
+                  <details key={index} className="notes-details">
+                    <summary className="notes-toggle">
+                      <span className="notes-toggle-text">
+                        {formatPlayerNameWithCharacter(noteUpdate.player_name, noteUpdate.character)} Notes
+                      </span>
+                      <span className="notes-toggle-arrow">▼</span>
+                    </summary>
+                  <div className="notes-content">
+                    <div className="notes-text">
+                      {noteUpdate.notes.split('\n').map((line: string, lineIndex: number) => {
+                        const trimmedLine = line.trim();
+                        const isBulletPoint = trimmedLine.startsWith('•') || trimmedLine.startsWith('-') || trimmedLine.startsWith('*');
+                        const cleanLine = isBulletPoint ? trimmedLine.substring(1).trim() : trimmedLine;
+                        
+                        return (
+                          <div 
+                            key={lineIndex} 
+                            className={`notes-line ${isBulletPoint ? 'bullet-point' : ''}`}
+                            data-bullet={isBulletPoint}
+                          >
+                            {cleanLine}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </details>
+                );
+              })}
+            </div>
+          </div>
+        );
+      case 'death_announcement':
+        return (
+          <div className="event-details">
+            <div className="death-announcement-header">
+              <span className="death-announcement-icon">💀</span>
+              <span className="death-announcement-title">Death Announcement</span>
+            </div>
+            <div className="death-announcement-summary">
+              {event.metadata.dead_players && event.metadata.dead_players.length > 0 && (
+                <div className="dead-players-list">
+                  <span className="dead-players-label">Found dead this morning:</span>
+                  <span className="dead-players-names">
+                    {event.metadata.dead_players.map((player: string, index: number) => (
+                      <span key={index} className="dead-player-name">
+                        {formatPlayerName(player, event)}
+                        {index < event.metadata.dead_players.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 'minion_info':
+        return (
+          <div className="event-details">
+            <div className="minion-info-header">
+              <span className="minion-info-icon">👹</span>
+              <span className="minion-info-title">Minion Information</span>
+            </div>
+            <div className="minion-info-content">
+              {event.metadata.demon && (
+                <div className="demon-identity">
+                  <span className="info-label">The Demon is:</span>
+                  <span className="demon-name">{formatPlayerName(event.metadata.demon, event)}</span>
+                  {event.metadata.demon_character && (
+                    <span className="demon-character">({event.metadata.demon_character})</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 'demon_info':
+        return (
+          <div className="event-details">
+            <div className="demon-info-header">
+              <span className="demon-info-icon">😈</span>
+              <span className="demon-info-title">Demon Information</span>
+            </div>
+            <div className="demon-info-content">
+              {event.metadata.not_in_play && event.metadata.not_in_play.length > 0 && (
+                <div className="not-in-play-info">
+                  <span className="info-label">Good roles not in play:</span>
+                  <span className="not-in-play-list">
+                    {event.metadata.not_in_play.join(', ')}
+                  </span>
+                </div>
+              )}
+              {event.metadata.minions && event.metadata.minions.length > 0 && (
+                <div className="minions-info">
+                  <span className="info-label">Your minion{event.metadata.minions.length > 1 ? 's' : ''}:</span>
+                  <span className="minions-list">
+                    {event.metadata.minions.map((minion: string, index: number) => (
+                      <span key={index}>
+                        {formatPlayerName(minion, event)}
+                        {index < event.metadata.minions.length - 1 ? ', ' : ''}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -719,7 +986,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
                 <div className="timeline-marker">
                   <div 
                     className="timeline-dot"
-                    style={{ backgroundColor: getEventTypeColor(event.event_type) }}
+                    style={{ backgroundColor: getEventIconBackgroundColor(event.event_type) }}
                   >
                     <span className="event-icon">{getEventIcon(event.event_type)}</span>
                   </div>

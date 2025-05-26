@@ -215,6 +215,40 @@
   padding: 12px;
   background-color: #3a3a3a;
   border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.nominations-open-indicator {
+  background-color: #4caf50;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.status-icon {
+  font-size: 1.1rem;
+}
+
+.status-text {
+  font-size: 0.9rem;
+}
+
+.no-nominatable-players {
+  background-color: #3a3a3a;
+  border-radius: 4px;
+  padding: 8px;
+  color: #aaa;
+  font-style: italic;
+  text-align: center;
+  margin-top: 8px;
 }
 
 .controls {
