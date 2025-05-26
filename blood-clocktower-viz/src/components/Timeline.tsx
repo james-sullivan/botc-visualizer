@@ -756,6 +756,18 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
                       <span className="stat-value">${apiCostSummary.average_cost_per_call.toFixed(6)}</span>
                     </div>
                   )}
+                  {apiCostSummary.total_cache_creation_tokens && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cache Write:</span>
+                      <span className="stat-value">{apiCostSummary.total_cache_creation_tokens.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {apiCostSummary.total_cache_read_tokens && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cache Read:</span>
+                      <span className="stat-value">{apiCostSummary.total_cache_read_tokens.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
