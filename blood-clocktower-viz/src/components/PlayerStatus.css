@@ -13,8 +13,8 @@
 
 .teams-container {
   display: flex;
-  gap: 20px;
   flex-direction: column;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
@@ -26,19 +26,19 @@
 .team-column {
   flex: 1;
   background-color: #3a3a3a;
+  border: 2px solid #4a4a4a;
   border-radius: 8px;
   padding: 16px;
-  border: 2px solid #4a4a4a;
 }
 
 .good-team {
-  border-color: #2196F3;
   background-color: rgba(33, 150, 243, 0.05);
+  border-color: #2196F3;
 }
 
 .evil-team {
-  border-color: #F44336;
   background-color: rgba(244, 67, 54, 0.05);
+  border-color: #F44336;
 }
 
 .team-header {
