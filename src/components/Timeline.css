@@ -2,8 +2,8 @@
   flex: 1;
   padding: 12px;
   height: 100%;
-  /* Define the timeline header height as a CSS variable */
-  --timeline-header-height: calc(0.9rem * 1.2 - 8px);
+  /* Define the timeline header height as a fixed value */
+  --timeline-header-height: 40px;
 }
 
 .timeline h2 {
@@ -15,8 +15,12 @@
   background-color: #1a1a1a;
   padding: 6px 0;
   z-index: 15;
-  /* Use the CSS variable for consistent height */
+  /* Fixed height to prevent layout shifts */
   height: var(--timeline-header-height);
+  line-height: 28px; /* Ensures text is vertically centered */
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .timeline-container {
@@ -864,7 +868,7 @@
 }
 
 .winner-team.good {
-  color: #4CAF50;
+  color: #2196F3;
 }
 
 .winner-team.evil {
