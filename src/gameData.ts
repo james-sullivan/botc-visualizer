@@ -2,7 +2,7 @@ import { GameEvent } from './types';
 
 export async function loadGameEvents(): Promise<GameEvent[]> {
   try {
-    const response = await fetch(`/game_log_20250526_152804.jsonl?t=${Date.now()}`);
+    const response = await fetch(`/game_log_20250526_223044.jsonl?t=${Date.now()}`);
     const text = await response.text();
     const lines = text.trim().split('\n');
     const rawEvents = lines.map(line => JSON.parse(line) as GameEvent);

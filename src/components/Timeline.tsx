@@ -32,7 +32,11 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       const isEvil = isEvilCharacter(playerState.character);
       return (
         <>
-          <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>{playerName}</span>{' '}
+          <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>
+            {playerName}
+            {playerState.poisoned && ' 🧪'}
+          </span>
+          {' '}
           <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({playerState.character})</span>
         </>
       );
@@ -186,7 +190,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
     } else if (setupEvents.includes(eventType)) {
       return '#4CAF50'; // Green
     } else {
-      return '#757575'; // Grey
+      return '#000000'; // Black
     }
   };
 
@@ -528,7 +532,20 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} learned information about a Townsfolk character
+                {formatPlayerName(event.metadata.player_name, event)} learned that one of{' '}
+                {event.metadata.shown_players && event.metadata.shown_players.map((player: string, index: number) => (
+                  <span key={index}>
+                    {formatPlayerName(player, event)}
+                    {index < event.metadata.shown_players.length - 1 ? ' and ' : ''}
+                  </span>
+                ))}
+                {event.metadata.shown_character && (
+                  <span className="result-indicator">
+                    {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
+                      {event.metadata.shown_character}
+                    </span>
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -539,7 +556,20 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} learned information about an Outsider character
+                {formatPlayerName(event.metadata.player_name, event)} learned that one of{' '}
+                {event.metadata.shown_players && event.metadata.shown_players.map((player: string, index: number) => (
+                  <span key={index}>
+                    {formatPlayerName(player, event)}
+                    {index < event.metadata.shown_players.length - 1 ? ' and ' : ''}
+                  </span>
+                ))}
+                {event.metadata.shown_character && (
+                  <span className="result-indicator">
+                    {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
+                      {event.metadata.shown_character}
+                    </span>
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -550,7 +580,20 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} learned information about a Minion character
+                {formatPlayerName(event.metadata.player_name, event)} learned that one of{' '}
+                {event.metadata.shown_players && event.metadata.shown_players.map((player: string, index: number) => (
+                  <span key={index}>
+                    {formatPlayerName(player, event)}
+                    {index < event.metadata.shown_players.length - 1 ? ' and ' : ''}
+                  </span>
+                ))}
+                {event.metadata.shown_character && (
+                  <span className="result-indicator">
+                    {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
+                      {event.metadata.shown_character}
+                    </span>
+                  </span>
+                )}
               </span>
             </div>
           </div>
@@ -930,52 +973,47 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
       case 'minion_info':
         return (
           <div className="event-details">
-            <div className="minion-info-header">
-              <span className="minion-info-icon">👹</span>
-              <span className="minion-info-title">Minion Information</span>
-            </div>
-            <div className="minion-info-content">
-              {event.metadata.demon && (
-                <div className="demon-identity">
-                  <span className="info-label">The Demon is:</span>
-                  <span className="demon-name">{formatPlayerName(event.metadata.demon, event)}</span>
-                  {event.metadata.demon_character && (
-                    <span className="demon-character">({event.metadata.demon_character})</span>
-                  )}
-                </div>
-              )}
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                The Minion learned that {formatPlayerName(event.metadata.demon, event)} is the{' '}
+                {event.metadata.demon_character && (
+                  <span className={`character-name ${isEvilCharacter(event.metadata.demon_character) ? 'evil' : 'good'}`}>
+                    {event.metadata.demon_character}
+                  </span>
+                )}
+              </span>
             </div>
           </div>
         );
       case 'demon_info':
         return (
           <div className="event-details">
-            <div className="demon-info-header">
-              <span className="demon-info-icon">😈</span>
-              <span className="demon-info-title">Demon Information</span>
-            </div>
-            <div className="demon-info-content">
-              {event.metadata.not_in_play && event.metadata.not_in_play.length > 0 && (
-                <div className="not-in-play-info">
-                  <span className="info-label">Good roles not in play:</span>
-                  <span className="not-in-play-list">
-                    {event.metadata.not_in_play.join(', ')}
-                  </span>
-                </div>
-              )}
-              {event.metadata.minions && event.metadata.minions.length > 0 && (
-                <div className="minions-info">
-                  <span className="info-label">Your minion{event.metadata.minions.length > 1 ? 's' : ''}:</span>
-                  <span className="minions-list">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                The Demon learned that{' '}
+                {event.metadata.not_in_play && event.metadata.not_in_play.length > 0 && (
+                  <>
+                    <span className="result-indicator">
+                      {event.metadata.not_in_play.join(', ')}
+                    </span>
+                    {' '}are not in play
+                  </>
+                )}
+                {event.metadata.minions && event.metadata.minions.length > 0 && (
+                  <>
+                    {event.metadata.not_in_play && event.metadata.not_in_play.length > 0 ? ' and their minion' : 'their minion'}
+                    {event.metadata.minions.length > 1 ? 's are ' : ' is '}
                     {event.metadata.minions.map((minion: string, index: number) => (
                       <span key={index}>
                         {formatPlayerName(minion, event)}
-                        {index < event.metadata.minions.length - 1 ? ', ' : ''}
+                        {index < event.metadata.minions.length - 1 ? ' and ' : ''}
                       </span>
                     ))}
-                  </span>
-                </div>
-              )}
+                  </>
+                )}
+              </span>
             </div>
           </div>
         );

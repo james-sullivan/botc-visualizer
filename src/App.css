@@ -60,7 +60,7 @@
 
 .app-header {
   background-color: #2a2a2a;
-  padding: 20px;
+  padding: 16px;
   border-bottom: 2px solid #4a4a4a;
   display: flex;
   justify-content: space-between;
@@ -75,7 +75,7 @@
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.44rem;
   color: #ffffff;
 }
 
@@ -91,9 +91,9 @@
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 0.8rem;
   color: #aaa;
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .subtitle a {
@@ -109,8 +109,8 @@
 
 .game-info {
   display: flex;
-  gap: 20px;
-  font-size: 1rem;
+  gap: 16px;
+  font-size: 0.8rem;
   color: #aaa;
 }
 
@@ -125,7 +125,7 @@
   border-right: 2px solid #4a4a4a;
   background-color: #1a1a1a;
   overflow-y: auto;
-  max-height: calc(100vh - 80px);
+  max-height: calc(100vh - 64px);
 }
 
 /* Hide scrollbar for timeline section */

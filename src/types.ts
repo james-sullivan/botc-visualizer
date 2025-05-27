@@ -18,6 +18,7 @@ export interface PublicGameState {
   } | null;
   nominatable_players: string[];
   nominations_open?: boolean;
+  reminder_tokens?: Record<string, string>;
 }
 
 export interface GameEvent {

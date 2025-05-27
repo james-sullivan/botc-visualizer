@@ -5,9 +5,10 @@ import './PlayerStatus.css';
 
 interface PlayerStatusProps {
   players: PlayerState[];
+  reminderTokens?: Record<string, string>;
 }
 
-const PlayerStatus: React.FC<PlayerStatusProps> = ({ players }) => {
+const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens }) => {
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -23,16 +24,74 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players }) => {
   const goodPlayers = players.filter(player => !isEvilCharacter(player.character));
   const evilPlayers = players.filter(player => isEvilCharacter(player.character));
 
+  // Helper function to get reminder tokens for a player
+  const getPlayerReminderTokens = (playerName: string) => {
+    if (!reminderTokens) return [];
+    
+    const tokens = [];
+    
+    // Check for Slayer Power Used
+    if (reminderTokens['Slayer_Power_Used'] === playerName) {
+      tokens.push({ type: 'power-used', text: 'Power Used' });
+    }
+    
+    // Check for Virgin Power Used
+    if (reminderTokens['Virgin_Power_Used'] === playerName) {
+      tokens.push({ type: 'power-used', text: 'Power Used' });
+    }
+    
+    // Check for Red Herring
+    if (reminderTokens['Fortuneteller_Red_Herring'] === playerName) {
+      tokens.push({ type: 'red-herring', text: '🔮 Red Herring' });
+    }
+    
+    // Check for Washerwoman tokens
+    if (reminderTokens['Washerwoman_Townsfolk'] === playerName) {
+      tokens.push({ type: 'washerwoman', text: '🧺 Townsfolk' });
+    }
+    if (reminderTokens['Washerwoman_Other'] === playerName) {
+      tokens.push({ type: 'washerwoman', text: '🧺 Other' });
+    }
+    
+    // Check for Librarian tokens
+    if (reminderTokens['Librarian_Outsider'] === playerName) {
+      tokens.push({ type: 'librarian', text: '📚 Outsider' });
+    }
+    if (reminderTokens['Librarian_Other'] === playerName) {
+      tokens.push({ type: 'librarian', text: '📚 Other' });
+    }
+    
+    // Check for Investigator tokens
+    if (reminderTokens['Investigator_Minion'] === playerName) {
+      tokens.push({ type: 'investigator', text: '🔍 Minion' });
+    }
+    if (reminderTokens['Investigator_Other'] === playerName) {
+      tokens.push({ type: 'investigator', text: '🔍 Other' });
+    }
+    
+    // Check for Butler Master
+    if (reminderTokens['Butler_Master'] === playerName) {
+      tokens.push({ type: 'butler', text: '🤵 Master' });
+    }
+    
+    // Check for Monk Protected
+    if (reminderTokens['Monk_Protected'] === playerName) {
+      tokens.push({ type: 'monk', text: '🧘 Protected' });
+    }
+    
+    return tokens;
+  };
+
   const renderPlayerCard = (player: PlayerState, index: number) => {
     const totalPlayers = players.length;
     const angle = (index * 360) / totalPlayers;
-    const radius = 160; // Distance from center
-    const centerX = 200; // Half of container width (400px)
-    const centerY = 200; // Half of container height (400px)
+    const radius = 192; // Distance from center (increased by 20%)
+    const centerX = 240; // Half of container width (480px)
+    const centerY = 240; // Half of container height (480px)
     
     // Calculate position using trigonometry
-    const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180) - 60; // -60 to center the card (half of card width)
-    const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180) - 40; // -40 to center the card (approximate half of card height)
+    const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180) - 72; // -72 to center the card (half of card width: 144px/2)
+    const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180) - 48; // -48 to center the card (approximate half of card height)
     
     return (
       <div 
@@ -70,6 +129,15 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players }) => {
               POISONED
             </span>
           )}
+          {getPlayerReminderTokens(player.name).map((token, tokenIndex) => (
+            <span 
+              key={tokenIndex}
+              className={`reminder-token ${token.type}`}
+              title={`Reminder token: ${token.text}`}
+            >
+              {token.text}
+            </span>
+          ))}
         </div>
         {player.drunk && player.drunk_character && (
           <div className="drunk-character-info">

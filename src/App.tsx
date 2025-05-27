@@ -99,6 +99,7 @@ function App() {
         <div className="player-section">
           <PlayerStatus 
             players={currentGameState?.player_state || []} 
+            reminderTokens={currentGameState?.reminder_tokens}
           />
           
           <div className="nomination-status">
