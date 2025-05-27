@@ -2,7 +2,9 @@ import { GameEvent } from './types';
 
 export async function loadGameEvents(): Promise<GameEvent[]> {
   try {
-    const response = await fetch(`/game_log_20250526_223044.jsonl?t=${Date.now()}`);
+    // Use process.env.PUBLIC_URL to get the correct base path for deployment
+    const basePath = process.env.PUBLIC_URL || '';
+    const response = await fetch(`${basePath}/game_log_20250526_223044.jsonl?t=${Date.now()}`);
     const text = await response.text();
     const lines = text.trim().split('\n');
     const rawEvents = lines.map(line => JSON.parse(line) as GameEvent);
