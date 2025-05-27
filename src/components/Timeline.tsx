@@ -35,6 +35,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
           <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>
             {playerName}
             {playerState.poisoned && ' 🧪'}
+            {playerState.drunk && ' 🍺'}
           </span>
           {' '}
           <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({playerState.character})</span>
@@ -477,7 +478,7 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             <div className="execution-summary">
               <span className="execution-icon">⚔️</span>
               <span className="executed-player">{formatPlayerName(event.metadata.executed_player, event)}</span>
-              <span className="execution-label">has died</span>
+              <span className="execution-label">has been executed</span>
             </div>
           </div>
         );
@@ -899,25 +900,11 @@ const Timeline: React.FC<TimelineProps> = ({ events, currentEventIndex, onEventC
             </div>
             <div className="combined-notes-container">
               {event.metadata.notes_updates.map((noteUpdate: any, index: number) => {
-                // Format player name with character info directly
-                const formatPlayerNameWithCharacter = (playerName: string, character: string) => {
-                  if (character) {
-                    const isEvil = isEvilCharacter(character);
-                    return (
-                      <>
-                        <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>{playerName}</span>{' '}
-                        <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({character})</span>
-                      </>
-                    );
-                  }
-                  return playerName;
-                };
-                
                 return (
                   <details key={index} className="notes-details">
                     <summary className="notes-toggle">
                       <span className="notes-toggle-text">
-                        {formatPlayerNameWithCharacter(noteUpdate.player_name, noteUpdate.character)} Notes
+                        {formatPlayerName(noteUpdate.player_name, event)} Notes
                       </span>
                       <span className="notes-toggle-arrow">▼</span>
                     </summary>

@@ -2,6 +2,8 @@
   flex: 1;
   padding: 12px;
   height: 100%;
+  /* Define the timeline header height as a CSS variable */
+  --timeline-header-height: calc(0.9rem * 1.2 - 8px);
 }
 
 .timeline h2 {
@@ -13,6 +15,8 @@
   background-color: #1a1a1a;
   padding: 6px 0;
   z-index: 15;
+  /* Use the CSS variable for consistent height */
+  height: var(--timeline-header-height);
 }
 
 .timeline-container {
@@ -49,28 +53,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 7px;
+  padding: 8px 12px;
   background-color: #2a2a2a;
-  border-radius: 4px;
-  border-left: 2px solid #4CAF50;
-  margin-bottom: 5px;
+  border-radius: 6px;
+  border-left: 4px solid #4CAF50;
+  margin-bottom: 8px;
   position: sticky;
-  top: 3px;
-  z-index: 10;
+  top: var(--timeline-header-height);
+  z-index: 12;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .phase-title {
   font-weight: bold;
-  font-size: 0.85rem;
+  font-size: 1.1rem;
   color: #ffffff;
+  letter-spacing: 0.5px;
 }
 
 .phase-event-count {
-  font-size: 0.7rem;
-  color: #aaa;
+  font-size: 0.8rem;
+  color: #ccc;
   background-color: #3a3a3a;
-  padding: 2px 5px;
-  border-radius: 7px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 .timeline-event {
