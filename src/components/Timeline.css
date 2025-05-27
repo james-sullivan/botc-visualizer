@@ -2,8 +2,8 @@
   flex: 1;
   padding: 12px;
   height: 100%;
-  /* Define the timeline header height as a fixed value */
-  --timeline-header-height: 40px;
+  /* Define the timeline header height as a CSS variable */
+  --timeline-header-height: calc(0.9rem * 1.2 - 8px);
 }
 
 .timeline h2 {
@@ -15,12 +15,8 @@
   background-color: #1a1a1a;
   padding: 6px 0;
   z-index: 15;
-  /* Fixed height to prevent layout shifts */
+  /* Use the CSS variable for consistent height */
   height: var(--timeline-header-height);
-  line-height: 28px; /* Ensures text is vertically centered */
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
 }
 
 .timeline-container {
