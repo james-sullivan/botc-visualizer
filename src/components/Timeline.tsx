@@ -178,6 +178,8 @@ const Timeline: React.FC<TimelineProps> = ({
       'death_announcement': '💀',
       'minion_info': '👹',
       'demon_info': '😈',
+      'player_pass': '⏭️',
+      'player_pass_combined': '⏭️',
     };
     return icons[eventType] || '📝';
   };
@@ -393,6 +395,23 @@ const Timeline: React.FC<TimelineProps> = ({
                 )}
               </span>
             </div>
+          </div>
+        );
+      case 'player_pass':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} passed their turn
+              </span>
+            </div>
+            {event.metadata.private_reasoning && (
+              <div className="reasoning-section private">
+                <div className="reasoning-label">Private Reasoning:</div>
+                <div className="reasoning-text">"{event.metadata.private_reasoning}"</div>
+              </div>
+            )}
           </div>
         );
       case 'poisoner_power':
@@ -998,7 +1017,7 @@ const Timeline: React.FC<TimelineProps> = ({
               <span className="death-announcement-title">Death Announcement</span>
             </div>
             <div className="death-announcement-summary">
-              {event.metadata.dead_players && event.metadata.dead_players.length > 0 && (
+              {event.metadata.dead_players && event.metadata.dead_players.length > 0 ? (
                 <div className="dead-players-list">
                   <span className="dead-players-label">Found dead this morning:</span>
                   <span className="dead-players-names">
@@ -1009,6 +1028,10 @@ const Timeline: React.FC<TimelineProps> = ({
                       </span>
                     ))}
                   </span>
+                </div>
+              ) : (
+                <div className="no-deaths-message">
+                  <span className="no-deaths-text">No one died in the night</span>
                 </div>
               )}
             </div>
@@ -1092,6 +1115,39 @@ const Timeline: React.FC<TimelineProps> = ({
                   </>
                 )}
               </span>
+            </div>
+          </div>
+        );
+      case 'player_pass_combined':
+        return (
+          <div className="event-details">
+            <div className="notes-header">
+              <span className="notes-icon">⏭️</span>
+              <span className="notes-summary">{event.metadata.count} players passed their turn</span>
+            </div>
+            <div className="combined-notes-container">
+              {event.metadata.pass_events.map((passEvent: any, index: number) => {
+                return (
+                  <details key={index} className="notes-details">
+                    <summary className="notes-toggle">
+                      <span className="notes-toggle-text">
+                        {formatPlayerName(passEvent.player_name, event)} Pass
+                      </span>
+                      <span className="notes-toggle-arrow">▼</span>
+                    </summary>
+                  <div className="notes-content">
+                    <div className="notes-text">
+                      {passEvent.private_reasoning && (
+                        <div className="reasoning-section private">
+                          <div className="reasoning-label">Private Reasoning:</div>
+                          <div className="reasoning-text">"{passEvent.private_reasoning}"</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </details>
+                );
+              })}
             </div>
           </div>
         );

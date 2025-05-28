@@ -1,6 +1,6 @@
 import { GameEvent } from './types';
 
-export async function loadGameEvents(filename: string = 'game_log_20250527_220743.jsonl'): Promise<GameEvent[]> {
+export async function loadGameEvents(filename: string = 'game_log_20250527_233816.jsonl'): Promise<GameEvent[]> {
   try {
     // Use process.env.PUBLIC_URL to get the correct base path for deployment
     const basePath = process.env.PUBLIC_URL || '';
@@ -22,7 +22,6 @@ function processEvents(events: GameEvent[]): GameEvent[] {
   // Filter out events we want to ignore for a cleaner timeline
   const filteredEvents = events.filter(event => {
     const ignoredEventTypes = [
-      'player_pass',
       'info_broadcast',
       'player_setup', // This is usually just character assignment
       'phase_change',  // Remove phase_change events as they're redundant with phase headers
@@ -58,7 +57,7 @@ function processEvents(events: GameEvent[]): GameEvent[] {
     }
   }
 
-  // Second pass: process events and combine notes and nominations
+  // Second pass: process events and combine notes, nominations, and consecutive pass events
   for (let i = 0; i < filteredEvents.length; i++) {
     const event = filteredEvents[i];
     
@@ -92,6 +91,44 @@ function processEvents(events: GameEvent[]): GameEvent[] {
         processedEvents.push(combinedNotesEvent);
       }
       // Skip subsequent notes events in the same phase
+    } else if (event.event_type === 'player_pass') {
+      // Look for consecutive pass events
+      const passEvents = [event];
+      let j = i + 1;
+      
+      // Collect all consecutive pass events
+      while (j < filteredEvents.length && filteredEvents[j].event_type === 'player_pass') {
+        passEvents.push(filteredEvents[j]);
+        j++;
+      }
+      
+      if (passEvents.length > 1) {
+        // Create a combined pass event
+        const combinedPassEvent: GameEvent = {
+          ...event,
+          event_type: 'player_pass_combined',
+          description: `${passEvents.length} players passed their turn`,
+          participants: passEvents.map(e => e.metadata.player_name),
+          metadata: {
+            pass_events: passEvents.map(e => ({
+              player_name: e.metadata.player_name,
+              private_reasoning: e.metadata.private_reasoning,
+              timestamp: e.timestamp
+            })),
+            count: passEvents.length
+          },
+          // Ensure we have the public_game_state for character lookup
+          public_game_state: event.public_game_state
+        };
+        
+        processedEvents.push(combinedPassEvent);
+        
+        // Skip the processed pass events
+        i = j - 1;
+      } else {
+        // Single pass event, keep as is
+        processedEvents.push(event);
+      }
     } else if (event.event_type === 'nomination') {
       // Look for the immediately following nomination_result event
       const nextEvent = filteredEvents[i + 1];

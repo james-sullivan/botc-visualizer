@@ -8,6 +8,12 @@ import './App.css';
 // Available game logs with metadata
 const AVAILABLE_GAMES = [
   {
+    filename: 'game_log_20250527_233816.jsonl',
+    date: '2025-05-27',
+    time: '23:38',
+    title: 'Game #10 - May 27 Night'
+  },
+  {
     filename: 'game_log_20250527_220743.jsonl',
     date: '2025-05-27',
     time: '22:07',
