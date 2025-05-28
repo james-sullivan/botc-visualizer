@@ -6,9 +6,10 @@ import './PlayerStatus.css';
 interface PlayerStatusProps {
   players: PlayerState[];
   reminderTokens?: Record<string, string>;
+  highlightedPlayer?: string | null;
 }
 
-const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens }) => {
+const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayer }) => {
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -85,9 +86,16 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens }) 
   const renderPlayerCard = (player: PlayerState, index: number) => {
     const totalPlayers = players.length;
     const angle = (index * 360) / totalPlayers;
-    const radius = 192; // Distance from center (increased by 20%)
-    const centerX = 240; // Half of container width (480px)
-    const centerY = 240; // Half of container height (480px)
+    
+    // Dynamic sizing: base radius for 6 players, increase by 20px for each additional player
+    const baseRadius = 192;
+    const additionalRadius = Math.max(0, (totalPlayers - 6) * 20);
+    const radius = baseRadius + additionalRadius;
+    
+    // Dynamic container size based on radius
+    const containerSize = (radius + 100) * 2; // Add padding around the circle
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
     
     // Calculate position using trigonometry
     const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180) - 72; // -72 to center the card (half of card width: 144px/2)
@@ -96,7 +104,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens }) 
     return (
       <div 
         key={player.name} 
-        className={`player-card ${!player.alive ? 'dead' : ''}`}
+        className={`player-card ${!player.alive ? 'dead' : ''} ${highlightedPlayer === player.name ? 'highlighted' : ''}`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
@@ -165,7 +173,13 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens }) 
               {goodPlayers.length} Good, {evilPlayers.length} Evil
             </span>
           </div>
-          <div className="players-grid">
+          <div 
+            className="players-grid"
+            style={{
+              width: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`,
+              height: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`
+            }}
+          >
             {players.map((player, index) => renderPlayerCard(player, index))}
           </div>
         </div>

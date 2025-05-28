@@ -79,6 +79,7 @@ function App() {
   const [showGameSelector, setShowGameSelector] = useState(false);
   const [timelineWidth, setTimelineWidth] = useState(60); // Percentage
   const [isResizing, setIsResizing] = useState(false);
+  const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -104,6 +105,10 @@ function App() {
   const handleGameSelect = (filename: string) => {
     setSelectedGame(filename);
     setShowGameSelector(false); // Close the panel after selection
+  };
+
+  const handlePlayerHighlight = (playerName: string | null) => {
+    setHighlightedPlayer(playerName);
   };
 
   // Handle mouse events for resizing
@@ -274,6 +279,7 @@ function App() {
             events={gameEvents} 
             currentEventIndex={currentEventIndex} 
             onEventClick={handleEventClick}
+            onPlayerHighlight={handlePlayerHighlight}
             showGameSelector={showGameSelector}
             onToggleGameSelector={() => setShowGameSelector(!showGameSelector)}
             selectedGame={selectedGame}
@@ -295,6 +301,7 @@ function App() {
           <PlayerStatus 
             players={currentEvent?.game_state?.player_state || currentEvent?.public_game_state?.player_state || []}
             reminderTokens={currentEvent?.game_state?.reminder_tokens || currentEvent?.public_game_state?.reminder_tokens}
+            highlightedPlayer={highlightedPlayer}
           />
           
           <div className="nomination-status">

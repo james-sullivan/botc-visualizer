@@ -7,6 +7,7 @@ interface TimelineProps {
   events: GameEvent[];
   currentEventIndex: number;
   onEventClick: (index: number) => void;
+  onPlayerHighlight?: (playerName: string | null) => void;
   showGameSelector: boolean;
   onToggleGameSelector: () => void;
   selectedGame: string;
@@ -22,6 +23,7 @@ const Timeline: React.FC<TimelineProps> = ({
   events, 
   currentEventIndex, 
   onEventClick,
+  onPlayerHighlight,
   showGameSelector,
   onToggleGameSelector,
   selectedGame,
@@ -87,6 +89,60 @@ const Timeline: React.FC<TimelineProps> = ({
         return '🤷 CAN\'T VOTE';
       default:
         return vote;
+    }
+  };
+
+  // Helper function to get the initiating player for an event
+  const getInitiatingPlayer = (event: GameEvent): string | null => {
+    switch (event.event_type) {
+      case 'nomination':
+      case 'nomination_complete':
+      case 'nomination_result':
+        return event.metadata.nominator;
+      
+      case 'message':
+        return event.metadata.sender === 'Storyteller' ? null : event.metadata.sender;
+      
+      case 'notes_update':
+        return event.metadata.player_name;
+      
+      case 'player_pass':
+        return event.metadata.player_name;
+      
+      // Power events
+      case 'slayer_power':
+      case 'poisoner_power':
+      case 'imp_power':
+      case 'empath_power':
+      case 'fortuneteller_power':
+      case 'spy_power':
+      case 'washerwoman_power':
+      case 'librarian_power':
+      case 'investigator_power':
+      case 'chef_power':
+      case 'monk_power':
+      case 'ravenkeeper_power':
+      case 'undertaker_power':
+      case 'butler_power':
+      case 'virgin_power':
+        return event.metadata.player_name;
+      
+      // Events with no specific initiating player
+      case 'game_setup':
+      case 'game_start':
+      case 'round_start':
+      case 'phase_change':
+      case 'nominations_open':
+      case 'execution':
+      case 'player_death':
+      case 'game_end':
+      case 'death_announcement':
+      case 'minion_info':
+      case 'demon_info':
+      case 'notes_update_combined':
+      case 'player_pass_combined':
+      default:
+        return null;
     }
   };
 
@@ -740,9 +796,9 @@ const Timeline: React.FC<TimelineProps> = ({
         // Determine message type based on recipients
         const isEveryone = missingPlayers.length === 0 && recipients.length === expectedEveryoneRecipients.length;
         const isEveryoneButOne = missingPlayers.length === 1;
-        const missingPlayer = isEveryoneButOne ? missingPlayers[0] : null;
+        const isEveryoneButTwo = missingPlayers.length === 2;
         
-        const isPublicMessage = recipients.length > 1 && !isEveryone && !isEveryoneButOne;
+        const isPublicMessage = recipients.length > 1 && !isEveryone && !isEveryoneButOne && !isEveryoneButTwo;
         
         return (
           <div className="event-details">
@@ -752,10 +808,13 @@ const Timeline: React.FC<TimelineProps> = ({
                   {event.metadata.sender === 'Storyteller' ? 'Storyteller' : formatPlayerName(event.metadata.sender, event)}
                 </span>
                 <span className="message-arrow">→</span>
-                <span className={`recipients ${isPrivateMessage ? 'private' : (isPublicMessage || isEveryone || isEveryoneButOne) ? 'public' : ''}`}>
+                <span className={`recipients ${isPrivateMessage ? 'private' : (isPublicMessage || isEveryone || isEveryoneButOne || isEveryoneButTwo) ? 'public' : ''}`}>
                   {isEveryone ? <span className="everyone">Everyone</span> :
-                   isEveryoneButOne && missingPlayer ? (
-                     <><span className="everyone">Everyone</span> <span className="but-text">but</span> {formatPlayerName(missingPlayer, event)}</>
+                   isEveryoneButOne ? (
+                     <><span className="everyone">Everyone</span> <span className="but-text">but</span> {formatPlayerName(missingPlayers[0], event)}</>
+                   ) :
+                   isEveryoneButTwo ? (
+                     <><span className="everyone">Everyone</span> <span className="but-text">but</span> {formatPlayerName(missingPlayers[0], event)} <span className="but-text">and</span> {formatPlayerName(missingPlayers[1], event)}</>
                    ) :
                    event.metadata.recipients?.map((recipient: string, index: number) => (
                      <span key={index}>
@@ -770,6 +829,7 @@ const Timeline: React.FC<TimelineProps> = ({
                  isPrivateMessage ? '🔒 Private Message' : 
                  isEveryone ? '📢 Public Message (Everyone)' :
                  isEveryoneButOne ? '📢 Public Message (Excluding One)' :
+                 isEveryoneButTwo ? '📢 Public Message (Excluding Two)' :
                  isPublicMessage ? '📢 Public Message' : '💬 Message'}
               </div>
             </div>
@@ -1230,7 +1290,18 @@ const Timeline: React.FC<TimelineProps> = ({
                 ref={(el) => { eventRefs.current[index] = el; }}
                 className={`timeline-event indent-${indentLevel} ${index === currentEventIndex ? 'current' : ''} ${index < currentEventIndex ? 'past' : ''}`}
                 onClick={() => onEventClick(index)}
-                onMouseEnter={() => onEventClick(index)}
+                onMouseEnter={() => {
+                  onEventClick(index);
+                  if (onPlayerHighlight) {
+                    const initiatingPlayer = getInitiatingPlayer(event);
+                    onPlayerHighlight(initiatingPlayer);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (onPlayerHighlight) {
+                    onPlayerHighlight(null);
+                  }
+                }}
                 style={{ 
                   borderLeftColor: phaseColor,
                   marginLeft: `${indentLevel * 20}px`
