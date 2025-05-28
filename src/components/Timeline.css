@@ -6,17 +6,51 @@
   --timeline-header-height: calc(0.9rem * 1.2 - 8px);
 }
 
-.timeline h2 {
+.timeline-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
-  color: #ffffff;
-  font-size: 0.9rem;
   position: sticky;
   top: 0;
   background-color: #1a1a1a;
   padding: 6px 0;
   z-index: 15;
-  /* Use the CSS variable for consistent height */
   height: var(--timeline-header-height);
+}
+
+.timeline h2 {
+  color: #ffffff;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.game-selector-button {
+  background-color: #4a4a4a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+}
+
+.game-selector-button:hover {
+  background-color: #5a5a5a;
+  transform: translateY(-1px);
+}
+
+.game-selector-button:active {
+  transform: translateY(0);
+}
+
+.selector-icon {
+  font-size: 0.9rem;
 }
 
 .timeline-container {
@@ -121,7 +155,7 @@
 }
 
 .timeline-marker {
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   margin-right: 12px;
@@ -187,12 +221,12 @@
 
 .event-time {
   color: #aaa;
-  font-size: 0.7rem;
+  font-size: 0.9rem;
 }
 
 .event-time-only {
   color: #aaa;
-  font-size: 0.45rem;
+  font-size: 0.9rem;
   text-align: right;
   margin-bottom: 1px;
 }
