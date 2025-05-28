@@ -1,6 +1,6 @@
 import React from 'react';
 import { PlayerState } from '../types';
-import { isEvilCharacter, getTeamColor } from '../gameData';
+import { isEvilCharacter, getTeamColor, formatCharacterName } from '../gameData';
 import './PlayerStatus.css';
 
 interface PlayerStatusProps {
@@ -14,7 +14,6 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
   if (!players || players.length === 0) {
     return (
       <div className="player-status">
-        <h2>Player Status</h2>
         <div className="no-players">No player data available</div>
       </div>
     );
@@ -116,7 +115,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
           className="player-character"
           style={{ color: getTeamColor(player.character) }}
         >
-          {player.character}
+          {formatCharacterName(player.character)}
         </div>
         <div className="player-status-indicators">
           <span className={`status-indicator ${player.alive ? 'alive' : 'dead'}`}>
@@ -154,7 +153,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
               className="drunk-character"
               style={{ color: getTeamColor(player.drunk_character) }}
             >
-              {player.drunk_character}
+              {formatCharacterName(player.drunk_character)}
             </span>
           </div>
         )}
@@ -164,7 +163,6 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
 
   return (
     <div className="player-status">
-      <h2>Player Status</h2>
       <div className="teams-container">
         <div className="team-column" style={{ flex: '1 1 100%' }}>
           <div className="team-header">

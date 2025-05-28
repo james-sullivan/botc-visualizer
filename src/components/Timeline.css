@@ -2,8 +2,10 @@
   flex: 1;
   padding: 12px;
   height: 100%;
+  display: flex;
+  flex-direction: column;
   /* Define the timeline header height as a CSS variable */
-  --timeline-header-height: calc(0.9rem * 1.2 - 8px);
+  --timeline-header-height: 40px;
 }
 
 .timeline-header {
@@ -17,11 +19,14 @@
   padding: 6px 0;
   z-index: 15;
   height: var(--timeline-header-height);
+  min-height: var(--timeline-header-height);
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .timeline h2 {
   color: #ffffff;
-  font-size: 0.9rem;
+  font-size: 1.08rem;
   margin: 0;
 }
 
@@ -55,9 +60,10 @@
 
 .timeline-container {
   position: relative;
-  max-height: calc(100vh - 72px);
+  flex: 1;
   overflow-y: auto;
   padding-right: 5px;
+  min-height: 0;
 }
 
 /* Custom scrollbar */
@@ -93,7 +99,7 @@
   border-left: 4px solid #4CAF50;
   margin-bottom: 8px;
   position: sticky;
-  top: var(--timeline-header-height);
+  top: calc(var(--timeline-header-height) - 40px);
   z-index: 12;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { GameEvent } from '../types';
-import { getPhaseColor, getPhaseIndentation, isEvilCharacter } from '../gameData';
+import { getPhaseColor, getPhaseIndentation, isEvilCharacter, GameMetadata, formatCharacterName } from '../gameData';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -11,12 +11,7 @@ interface TimelineProps {
   showGameSelector: boolean;
   onToggleGameSelector: () => void;
   selectedGame: string;
-  availableGames: Array<{
-    filename: string;
-    date: string;
-    time: string;
-    title: string;
-  }>;
+  availableGames: GameMetadata[];
 }
 
 const Timeline: React.FC<TimelineProps> = ({ 
@@ -49,6 +44,7 @@ const Timeline: React.FC<TimelineProps> = ({
     const playerState = gameState?.player_state?.find(p => p.name === playerName);
     if (playerState?.character) {
       const isEvil = isEvilCharacter(playerState.character);
+      const formattedCharacterName = formatCharacterName(playerState.character);
       return (
         <>
           <span className={`player-name ${isEvil ? 'evil' : 'good'}`}>
@@ -57,7 +53,7 @@ const Timeline: React.FC<TimelineProps> = ({
             {playerState.drunk && ' 🍺'}
           </span>
           {' '}
-          <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({playerState.character})</span>
+          <span className={`character-name ${isEvil ? 'evil' : 'good'}`}>({formattedCharacterName})</span>
         </>
       );
     }
@@ -451,6 +447,18 @@ const Timeline: React.FC<TimelineProps> = ({
                 )}
               </span>
             </div>
+            {event.metadata.public_reasoning && (
+              <div className="reasoning-section">
+                <div className="reasoning-label">Public Reasoning:</div>
+                <div className="reasoning-text">"{event.metadata.public_reasoning}"</div>
+              </div>
+            )}
+            {event.metadata.private_reasoning && (
+              <div className="reasoning-section private">
+                <div className="reasoning-label">Private Reasoning:</div>
+                <div className="reasoning-text">"{event.metadata.private_reasoning}"</div>
+              </div>
+            )}
           </div>
         );
       case 'player_pass':
@@ -520,7 +528,7 @@ const Timeline: React.FC<TimelineProps> = ({
             <div className="narrative-description">
               <span className="power-icon">💜</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} checked their neighbors{' '}
+                {formatPlayerName(event.metadata.player_name, event)} checked their living neighbors{' '}
                 {event.metadata.neighbors && event.metadata.neighbors.map((neighbor: string, index: number) => (
                   <span key={index}>
                     {formatPlayerName(neighbor, event)}
@@ -619,7 +627,7 @@ const Timeline: React.FC<TimelineProps> = ({
               <span className="narrative-text">
                 {formatPlayerName(event.metadata.player_name, event)} learned {formatPlayerName(event.metadata.executed_player, event)} was the{' '}
                 <span className={`character-name ${isEvilCharacter(event.metadata.learned_character) ? 'evil' : 'good'}`}>
-                  {event.metadata.learned_character}
+                  {formatCharacterName(event.metadata.learned_character)}
                 </span>
               </span>
             </div>
@@ -653,7 +661,7 @@ const Timeline: React.FC<TimelineProps> = ({
                 {event.metadata.shown_character && (
                   <span className="result-indicator">
                     {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
-                      {event.metadata.shown_character}
+                      {formatCharacterName(event.metadata.shown_character)}
                     </span>
                   </span>
                 )}
@@ -677,7 +685,7 @@ const Timeline: React.FC<TimelineProps> = ({
                 {event.metadata.shown_character && (
                   <span className="result-indicator">
                     {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
-                      {event.metadata.shown_character}
+                      {formatCharacterName(event.metadata.shown_character)}
                     </span>
                   </span>
                 )}
@@ -701,7 +709,7 @@ const Timeline: React.FC<TimelineProps> = ({
                 {event.metadata.shown_character && (
                   <span className="result-indicator">
                     {' '}is the <span className={`character-name ${isEvilCharacter(event.metadata.shown_character) ? 'evil' : 'good'}`}>
-                      {event.metadata.shown_character}
+                      {formatCharacterName(event.metadata.shown_character)}
                     </span>
                   </span>
                 )}
@@ -715,12 +723,7 @@ const Timeline: React.FC<TimelineProps> = ({
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} chose someone to protect from the Demon
-                {event.metadata.target && (
-                  <span className="result-indicator">
-                    {' '}(protected {formatPlayerName(event.metadata.target, event)})
-                  </span>
-                )}
+                {formatPlayerName(event.metadata.player_name, event)} protected {event.metadata.target ? formatPlayerName(event.metadata.target, event) : 'someone'} from the Demon
               </span>
             </div>
             {event.metadata.private_reasoning && (
@@ -788,17 +791,20 @@ const Timeline: React.FC<TimelineProps> = ({
         // Calculate expected recipients for "Everyone" (all players except sender)
         const expectedEveryoneRecipients = allPlayers.filter(player => player !== sender);
         
+        // Filter out sender from recipients list if they accidentally included themselves
+        const recipientsExcludingSender = recipients.filter((recipient: string) => recipient !== sender);
+        
         // Find players who didn't receive the message (excluding the sender)
         const missingPlayers = expectedEveryoneRecipients.filter(player => 
-          !recipients.includes(player)
+          !recipientsExcludingSender.includes(player)
         );
         
-        // Determine message type based on recipients
-        const isEveryone = missingPlayers.length === 0 && recipients.length === expectedEveryoneRecipients.length;
+        // Determine message type based on recipients (excluding sender from count)
+        const isEveryone = missingPlayers.length === 0 && recipientsExcludingSender.length === expectedEveryoneRecipients.length;
         const isEveryoneButOne = missingPlayers.length === 1;
         const isEveryoneButTwo = missingPlayers.length === 2;
         
-        const isPublicMessage = recipients.length > 1 && !isEveryone && !isEveryoneButOne && !isEveryoneButTwo;
+        const isPublicMessage = recipientsExcludingSender.length > 1 && !isEveryone && !isEveryoneButOne && !isEveryoneButTwo;
         
         return (
           <div className="event-details">
@@ -1103,28 +1109,17 @@ const Timeline: React.FC<TimelineProps> = ({
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.participants[1], event)} learned that {formatPlayerName(event.metadata.demon, event)} is the{' '}
-                {event.metadata.demon_character && (
-                  <span className={`character-name ${isEvilCharacter(event.metadata.demon_character) ? 'evil' : 'good'}`}>
-                    {event.metadata.demon_character}
-                  </span>
-                )}
+                {formatPlayerName(event.participants[1], event)} learned that {formatPlayerName(event.metadata.demon, event)} is the Demon
                 {event.metadata.minions && event.metadata.minions.length > 1 && (
                   <>
                     {' '}and their fellow minion{event.metadata.minions.length > 2 ? 's are' : ' is'}{' '}
                     {event.metadata.minions.map((minion: any, index: number) => {
                       const minionName = typeof minion === 'string' ? minion : minion.name;
-                      const minionCharacter = typeof minion === 'object' ? minion.character : null;
                       // Skip the current minion (the one receiving this info)
                       if (minionName === event.participants[1]) return null;
                       return (
                         <span key={index}>
                           {formatPlayerName(minionName, event)}
-                          {minionCharacter && (
-                            <span className={`character-name ${isEvilCharacter(minionCharacter) ? 'evil' : 'good'}`}>
-                              {' '}({minionCharacter})
-                            </span>
-                          )}
                         </span>
                       );
                     }).filter(Boolean).reduce((prev: any, curr: any, index: number, array: any[]) => {
@@ -1159,15 +1154,9 @@ const Timeline: React.FC<TimelineProps> = ({
                     {event.metadata.minions.length > 1 ? 's are ' : ' is '}
                     {event.metadata.minions.map((minion: any, index: number) => {
                       const minionName = typeof minion === 'string' ? minion : minion.name;
-                      const minionCharacter = typeof minion === 'object' ? minion.character : null;
                       return (
                         <span key={index}>
                           {formatPlayerName(minionName, event)}
-                          {minionCharacter && (
-                            <span className={`character-name ${isEvilCharacter(minionCharacter) ? 'evil' : 'good'}`}>
-                              {' '}({minionCharacter})
-                            </span>
-                          )}
                           {index < event.metadata.minions.length - 1 ? ' and ' : ''}
                         </span>
                       );

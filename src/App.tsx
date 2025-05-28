@@ -1,72 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import Timeline from './components/Timeline';
 import PlayerStatus from './components/PlayerStatus';
-import { loadGameEvents } from './gameData';
+import { loadGameEvents, extractGameMetadata, GameMetadata } from './gameData';
 import { GameEvent } from './types';
 import './App.css';
 
-// Available game logs with metadata
-const AVAILABLE_GAMES = [
-  {
-    filename: 'game_log_20250527_233816.jsonl',
-    date: '2025-05-27',
-    time: '23:38',
-    title: 'Game #10 - May 27 Night'
-  },
-  {
-    filename: 'game_log_20250527_220743.jsonl',
-    date: '2025-05-27',
-    time: '22:07',
-    title: 'Game #9 - May 27 Late Evening'
-  },
-  {
-    filename: 'game_log_20250527_204500.jsonl',
-    date: '2025-05-27',
-    time: '20:45',
-    title: 'Game #8 - May 27 Evening'
-  },
-  {
-    filename: 'game_log_20250526_223044.jsonl',
-    date: '2025-05-26',
-    time: '22:30',
-    title: 'Game #7 - May 26 Evening'
-  },
-  {
-    filename: 'game_log_20250526_204654.jsonl',
-    date: '2025-05-26',
-    time: '20:46',
-    title: 'Game #6 - May 26 Afternoon'
-  },
-  {
-    filename: 'game_log_20250526_152804.jsonl',
-    date: '2025-05-26',
-    time: '15:28',
-    title: 'Game #5 - May 26 Midday'
-  },
-  {
-    filename: 'game_log_20250526_125240.jsonl',
-    date: '2025-05-26',
-    time: '12:52',
-    title: 'Game #4 - May 26 Morning'
-  },
-  {
-    filename: 'game_log_20250525_161301.jsonl',
-    date: '2025-05-25',
-    time: '16:13',
-    title: 'Game #3 - May 25 Afternoon'
-  },
-  {
-    filename: 'game_log_20250525_133022.jsonl',
-    date: '2025-05-25',
-    time: '13:30',
-    title: 'Game #2 - May 25 Midday'
-  },
-  {
-    filename: 'game_log_20250524_202903.jsonl',
-    date: '2025-05-24',
-    time: '20:29',
-    title: 'Game #1 - May 24 Evening'
-  }
+// Base game files list (we'll load metadata dynamically)
+const GAME_FILES = [
+  'game_log_20250528_164924.jsonl',
+  'game_log_20250528_162223.jsonl',
+  'game_log_20250528_154356.jsonl',
+  'game_log_20250527_233816.jsonl',
+  'game_log_20250527_220743.jsonl',
+  'game_log_20250527_204500.jsonl',
+  'game_log_20250526_223044.jsonl',
+  'game_log_20250526_204654.jsonl',
+  'game_log_20250526_152804.jsonl',
+  'game_log_20250526_125240.jsonl',
+  'game_log_20250525_161301.jsonl',
+  'game_log_20250525_133022.jsonl',
+  'game_log_20250524_202903.jsonl'
 ];
 
 function App() {
@@ -75,11 +28,33 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showCharactersModal, setShowCharactersModal] = useState(false);
-  const [selectedGame, setSelectedGame] = useState(AVAILABLE_GAMES[0].filename);
+  const [selectedGame, setSelectedGame] = useState(GAME_FILES[0]);
   const [showGameSelector, setShowGameSelector] = useState(false);
   const [timelineWidth, setTimelineWidth] = useState(60); // Percentage
   const [isResizing, setIsResizing] = useState(false);
   const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null);
+  const [availableGames, setAvailableGames] = useState<GameMetadata[]>([]);
+
+  // Load game metadata on component mount
+  useEffect(() => {
+    const loadGameMetadata = async () => {
+      console.log('Starting to load game metadata for files:', GAME_FILES);
+      const metadataPromises = GAME_FILES.map(filename => extractGameMetadata(filename));
+      const metadataResults = await Promise.all(metadataPromises);
+      
+      console.log('Metadata results:', metadataResults);
+      
+      // Filter out failed loads and sort by filename (newest first)
+      const validMetadata = metadataResults
+        .filter((metadata): metadata is GameMetadata => metadata !== null)
+        .sort((a, b) => b.filename.localeCompare(a.filename));
+      
+      console.log('Valid metadata:', validMetadata);
+      setAvailableGames(validMetadata);
+    };
+
+    loadGameMetadata();
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -217,13 +192,16 @@ function App() {
           </button>
         </div>
         <div className="game-list">
-          {AVAILABLE_GAMES.map((game) => (
+          {availableGames.map((game) => (
             <div
               key={game.filename}
               className={`game-item ${selectedGame === game.filename ? 'selected' : ''}`}
               onClick={() => handleGameSelect(game.filename)}
             >
               <div className="game-title">{game.title}</div>
+              <div className="game-characters">
+                {game.charactersInPlay.join(' • ')}
+              </div>
               <div className="game-meta">
                 <span className="game-date">{game.date}</span>
                 <span className="game-time">{game.time}</span>
@@ -283,7 +261,7 @@ function App() {
             showGameSelector={showGameSelector}
             onToggleGameSelector={() => setShowGameSelector(!showGameSelector)}
             selectedGame={selectedGame}
-            availableGames={AVAILABLE_GAMES}
+            availableGames={availableGames}
           />
         </div>
         
@@ -363,49 +341,47 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowRulesModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📖 Blood on the Clocktower Rules</h2>
+              <h2>Blood on the Clocktower Rules</h2>
               <button className="modal-close" onClick={() => setShowRulesModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <h3>Game Overview</h3>
-              <p>Blood on the Clocktower is a social deduction game where players are divided into two teams: <strong>Good</strong> and <strong>Evil</strong>.</p>
-              
-              <h3>Teams</h3>
-              <ul>
-                <li><strong>Good Team:</strong> Townsfolk and Outsiders who must identify and execute the Demon</li>
-                <li><strong>Evil Team:</strong> Minions and the Demon who must eliminate the Good players</li>
-              </ul>
+              <p>Blood on the Clocktower is a social deduction game similar to Werewolf (or Mafia). At the start of the game each player is secretly given a character that determines what team they are on and what special abilities they have. There can only be one of each character in the game. Players are either on the Good team or the Evil team. The Evil team members know who each other are but the Good team does not know who anyone but themselves are.</p>
 
-              <h3>Game Flow</h3>
-              <ol>
-                <li><strong>Night Phase:</strong> Players with night abilities use them secretly</li>
-                <li><strong>Day Phase:</strong> Players discuss, nominate, and vote to execute someone</li>
-                <li><strong>Nominations:</strong> Players can nominate others for execution</li>
-                <li><strong>Voting:</strong> All players vote on each nomination</li>
-                <li><strong>Execution:</strong> The player with the most votes (if above threshold) is executed</li>
-              </ol>
+              <h3>Storyteller</h3>
+              <p>The game is moderated by the Storyteller who is a neutral agent that will enforce the rules and give information to players. The Storyteller will also have decisions to make about things like what false information to give to players. The Storyteller maintains the complete game state inside of the Grimoire. This include what character each player is and what status effects they have.</p>
 
-              <h3>Win Conditions</h3>
-              <ul>
-                <li><strong>Good wins</strong> if the Demon is executed</li>
-                <li><strong>Evil wins</strong> if only 2 players remain alive (1 Good, 1 Evil)</li>
-              </ul>
+              <h3>Objectives</h3>
+              <p>The Good team wins if they execute the Demon.</p>
+              <p>The Evil team wins if there are only 2 players left alive (and the Demon is still alive).</p>
 
-              <h3>Key Mechanics</h3>
-              <ul>
-                <li><strong>Dead Vote:</strong> Dead players can vote once per game</li>
-                <li><strong>Nominations:</strong> Living players can nominate others for execution</li>
-                <li><strong>Majority:</strong> Executions require a majority of living players to vote</li>
-                <li><strong>Information:</strong> Good players receive information to help identify Evil</li>
-                <li><strong>Bluffing:</strong> Evil players must pretend to be Good characters</li>
-              </ul>
+              <h3>Gameplay</h3>
+              <p>The game is played in rounds. Each round has a night phase and then a day phase. The game continues until either team wins.</p>
+              <p>During the day players can send messages to each other to persuade, strategize, coordinate, theorize, and share information. At the end of the day players will vote on who they want to nominate for execution and at the end of the day, if a player has been nominated, that player will die.</p>
+              <p>During the night the Storyteller will secretly give information to players based on their character's ability or allow them to secretly use their ability. All information at night is secret and only the player receiving the information or using their ability knows about it.</p>
 
-              <h3>Special States</h3>
-              <ul>
-                <li><strong>Drunk:</strong> Player's ability doesn't work, but they don't know it</li>
-                <li><strong>Poisoned:</strong> Player's ability is disabled</li>
-                <li><strong>Mad:</strong> Player must act as if they believe false information</li>
-              </ul>
+              <h3>Nomination for Execution</h3>
+              <p>Towards the end of the day the Storyteller will allow players to nominate each other for execution. Each living player can only nominate one person per day and each person may only be nominated once per day. You can nominate any player including yourself or any other living or dead player.</p>
+              <p>During a nomination each player will vote starting with the player who is being nominated and proceeding left to right until all players have voted. Players can vote yes or no. When each player votes, they first get to see the votes of the players who voted before them.</p>
+              <p>The number of votes needed for a successful nomination is at least half of the living players rounded up. If a player is successfully nominated, future nominations will need to exceed the number of votes previously cast for that player to become the next nominee. If there is a tie, neither player is nominated and both players are safe for the day. At the end of the day, the currently nominated player will be executed. You do NOT learn what character players are when they die.</p>
+
+              <h3>Alignment</h3>
+              <p>The alignment of a player is the team they are on. A player can be on the Good team or the Evil team. By default, Townsfolk and Outsiders are Good players. Minions and the Demon are Evil players.</p>
+
+              <h3>Characters</h3>
+              <p>Each player has a character. Each character has an ability. A player's character is separate from their alignment. The moment a player dies, or becomes poisoned or drunk, their character's ability stops affecting the game.</p>
+
+              <h3>Roles</h3>
+              <p>The Good team is made up of Townsfolk and Outsiders. Townsfolk are Good players who have an ability that is helpful to the Good team. Outsiders are Good players who have an ability that is harmful to the Good team.</p>
+              <p>The Evil team is made up of one Demon and one to three Minions. The Demon is the most important Evil player and the player that the Good team is trying to kill. Minions are also Evil players who have an ability that is helpful to the Evil team. At the start of the game, the Demon is secretly told three good players that are not in play.</p>
+
+              <h3>Dead Players</h3>
+              <p>Dead players are still in the game and can still talk to other players, but they no longer have their character's ability, they cannot nominate players for execution, and they only get one vote for the rest of the game.</p>
+
+              <h3>Being Poisoned and Drunk</h3>
+              <p>Poisoned and Drunk are status effects that can be applied to players. They function the exact same way and a player will not know if they are Poisoned or Drunk. If a player is Poisoned or Drunk their character's ability will not work and any information that they receive from the Storyteller may be false.</p>
+
+              <h3>Registers</h3>
+              <p>The rules and characters abilities sometimes talk about a player "registering" as good/evil, a particular role, or a particular character. This means that the game mechanics will treat them as the character, alignment, or role they are registering as, even if they are not that character, alignment, or role. For example, if a player "might" register as evil, then the Storyteller can decide to show another player a demon character when another player uses their ability to check what character they are.</p>
             </div>
           </div>
         </div>
@@ -416,95 +392,93 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowCharactersModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>👥 Character Reference</h2>
+              <h2>Character Reference</h2>
               <button className="modal-close" onClick={() => setShowCharactersModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <h3>🟦 Townsfolk (Good)</h3>
-              <div className="character-list">
-                <div className="character-item">
-                  <strong>Washerwoman:</strong> You start knowing that 1 of 2 players is a particular Townsfolk.
+              <div style={{ whiteSpace: 'pre-line' }}>
+                <h3>Townsfolk (Good)</h3>
+                <div className="character-list">
+                  <div className="character-item">
+                    <strong>Washerwoman:</strong> Starts knowing that 1 of 2 players is a particular Townsfolk
+                  </div>
+                  <div className="character-item">
+                    <strong>Librarian:</strong> Starts knowing that 1 of 2 players is a particular Outsider (or that zero are in play)
+                  </div>
+                  <div className="character-item">
+                    <strong>Investigator:</strong> Starts knowing that 1 of 2 players is a particular Minion
+                  </div>
+                  <div className="character-item">
+                    <strong>Chef:</strong> Starts knowing how many adjacent pairs of Evil players there are. (If three evil players are adjacent in a line, there are two pairs)
+                  </div>
+                  <div className="character-item">
+                    <strong>Empath:</strong> Each night, learns how many of their 2 alive neighbors are Evil
+                  </div>
+                  <div className="character-item">
+                    <strong>Fortune Teller:</strong> Each night, chooses 2 players and learns if either is a Demon. There is a good player who registers as a Demon.
+                  </div>
+                  <div className="character-item">
+                    <strong>Undertaker:</strong> Each night (except the first), learns which character died by execution that day (players killed by the Demon are not considered executed)
+                  </div>
+                  <div className="character-item">
+                    <strong>Monk:</strong> Each night (except the first), chooses a player to protect from the Demon's attack
+                  </div>
+                  <div className="character-item">
+                    <strong>Ravenkeeper:</strong> If dies at night, wakes to choose a player and learn their character
+                  </div>
+                  <div className="character-item">
+                    <strong>Virgin:</strong> The first time nominated, if the nominator is a Townsfolk, the nominator dies immediately and the nomination continues.
+                  </div>
+                  <div className="character-item">
+                    <strong>Slayer:</strong> Once per game during the day, publicly choose a player; if they're the Demon, they die
+                  </div>
+                  <div className="character-item">
+                    <strong>Mayor:</strong> If only 3 players live and no execution occurs, their team wins; if they die at night, the Storyteller might choose another player to die instead
+                  </div>
+                  <div className="character-item">
+                    <strong>Soldier:</strong> Cannot be killed by the Demon
+                  </div>
                 </div>
-                <div className="character-item">
-                  <strong>Librarian:</strong> You start knowing that 1 of 2 players is a particular Outsider. (Or that zero are in play.)
+
+                <h3>Outsiders (Good)</h3>
+                <div className="character-list">
+                  <div className="character-item">
+                    <strong>Butler:</strong> Each night, chooses a player and can only vote if that player votes Yes before it is their turn to vote
+                  </div>
+                  <div className="character-item">
+                    <strong>Drunk:</strong> Thinks they are a Townsfolk but they are Drunk. They Storyteller will treat them as if they are the Townsfolk they think they are but their ability does not work.
+                  </div>
+                  <div className="character-item">
+                    <strong>Recluse:</strong> Might register as Evil and as a Minion or Demon, even if dead
+                  </div>
+                  <div className="character-item">
+                    <strong>Saint:</strong> If executed, their team loses
+                  </div>
                 </div>
-                <div className="character-item">
-                  <strong>Investigator:</strong> You start knowing that 1 of 2 players is a particular Minion.
+
+                <h3>Minions (Evil)</h3>
+                <div className="character-list">
+                  <div className="character-item">
+                    <strong>Poisoner:</strong> Each night they choose a player to poison for that night and the next day
+                  </div>
+                  <div className="character-item">
+                    <strong>Spy:</strong> Each night, sees the Grimoire (contains complete information about the game state); might register as Good and as a Townsfolk or Outsider
+                  </div>
+                  <div className="character-item">
+                    <strong>Scarlet_Woman:</strong> If 5+ players are alive and the Demon dies, becomes the Demon
+                  </div>
+                  <div className="character-item">
+                    <strong>Baron:</strong> Adds two extra Outsiders to the game during setup. The player count stays the same and Townsfolk are removed to make room
+                  </div>
                 </div>
-                <div className="character-item">
-                  <strong>Chef:</strong> You start knowing how many pairs of evil players there are.
-                </div>
-                <div className="character-item">
-                  <strong>Empath:</strong> Each night, you learn how many of your 2 alive neighbors are evil.
-                </div>
-                <div className="character-item">
-                  <strong>Fortune Teller:</strong> Each night, choose 2 players: you learn if either is a Demon. There is a good player that registers as a Demon to you.
-                </div>
-                <div className="character-item">
-                  <strong>Undertaker:</strong> Each night*, you learn which character died by execution today.
-                </div>
-                <div className="character-item">
-                  <strong>Monk:</strong> Each night*, choose a player (not yourself): they are safe from the Demon tonight.
-                </div>
-                <div className="character-item">
-                  <strong>Ravenkeeper:</strong> If you die at night, you are woken to choose a player: you learn their character.
-                </div>
-                <div className="character-item">
-                  <strong>Virgin:</strong> The 1st time you are nominated, if the nominator is a Townsfolk, they are executed immediately.
-                </div>
-                <div className="character-item">
-                  <strong>Slayer:</strong> Once per game, during the day, publicly choose a player: if they are the Demon, they die.
-                </div>
-                <div className="character-item">
-                  <strong>Soldier:</strong> You are safe from the Demon.
-                </div>
-                <div className="character-item">
-                  <strong>Mayor:</strong> If only 3 players live & no execution occurs, your team wins. If you die at night, another player might die instead.
+
+                <h3>Demon (Evil)</h3>
+                <div className="character-list">
+                  <div className="character-item">
+                    <strong>Imp:</strong> Each night (except the first), chooses a player to kill; if they kill themselves, the Storyteller picks a Minion to become the new Imp
+                  </div>
                 </div>
               </div>
-
-              <h3>🟨 Outsiders (Good but problematic)</h3>
-              <div className="character-list">
-                <div className="character-item">
-                  <strong>Butler:</strong> Each night, choose a player (not yourself): tomorrow, you may only vote if they are voting too.
-                </div>
-                <div className="character-item">
-                  <strong>Drunk:</strong> You do not know you are the Drunk. You think you are a Townsfolk character, but you are not.
-                </div>
-                <div className="character-item">
-                  <strong>Recluse:</strong> You might register as evil & as a Minion or Demon, even when dead.
-                </div>
-                <div className="character-item">
-                  <strong>Saint:</strong> If you die during the day, your team loses.
-                </div>
-              </div>
-
-              <h3>🟥 Minions (Evil)</h3>
-              <div className="character-list">
-                <div className="character-item">
-                  <strong>Poisoner:</strong> Each night, choose a player: they are poisoned tonight and tomorrow day.
-                </div>
-                <div className="character-item">
-                  <strong>Spy:</strong> Each night, you see the Grimoire. You might register as good & as a Townsfolk or Outsider, even when dead.
-                </div>
-                <div className="character-item">
-                  <strong>Scarlet Woman:</strong> If there are 5 or more players alive & the Demon dies, you become the Demon.
-                </div>
-                <div className="character-item">
-                  <strong>Baron:</strong> There are extra Outsiders in play. [+2 Outsiders]
-                </div>
-              </div>
-
-              <h3>⚫ Demons (Evil)</h3>
-              <div className="character-list">
-                <div className="character-item">
-                  <strong>Imp:</strong> Each night*, choose a player: they die. If you kill yourself this way, a Minion becomes the Imp.
-                </div>
-              </div>
-
-              <p className="character-note">
-                <em>* = Not on the first night</em>
-              </p>
             </div>
           </div>
         </div>

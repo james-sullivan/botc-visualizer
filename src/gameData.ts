@@ -1,6 +1,117 @@
 import { GameEvent } from './types';
 
-export async function loadGameEvents(filename: string = 'game_log_20250527_233816.jsonl'): Promise<GameEvent[]> {
+// Map technical model names to friendly display names
+const MODEL_NAME_MAP: Record<string, string> = {
+  'claude-3-5-sonnet-20241022': 'Claude 3.5 Sonnet',
+  'claude-3-5-haiku-20241022': 'Claude 3.5 Haiku',
+  'claude-sonnet-4-20250514': 'Claude 4 Sonnet',
+  'claude-3-sonnet-20240229': 'Claude 3 Sonnet',
+  'claude-3-haiku-20240307': 'Claude 3 Haiku',
+  'claude-3-opus-20240229': 'Claude 3 Opus',
+  'gpt-4o': 'GPT-4o',
+  'gpt-4o-mini': 'GPT-4o Mini',
+  'gpt-4-turbo': 'GPT-4 Turbo',
+  'gpt-4': 'GPT-4',
+  'gpt-3.5-turbo': 'GPT-3.5 Turbo',
+};
+
+// Helper function to get friendly model name
+const getFriendlyModelName = (modelName: string): string => {
+  return MODEL_NAME_MAP[modelName] || modelName;
+};
+
+// Helper function to format character names for display (convert underscores to spaces)
+export const formatCharacterName = (characterName: string): string => {
+  return characterName.replace(/_/g, ' ');
+};
+
+export interface GameMetadata {
+  filename: string;
+  playerCount: number;
+  model: string;
+  friendlyModelName: string;
+  title: string;
+  date: string;
+  time: string;
+  charactersInPlay: string[];
+}
+
+// Extract metadata from a game file
+export const extractGameMetadata = async (filename: string): Promise<GameMetadata | null> => {
+  try {
+    // Use the same base path logic as loadGameEvents
+    const basePath = process.env.PUBLIC_URL || '';
+    const response = await fetch(`${basePath}/${filename}?t=${Date.now()}`);
+    if (!response.ok) {
+      console.warn(`Could not fetch ${filename}: ${response.status}`);
+      return null;
+    }
+    
+    const text = await response.text();
+    const lines = text.trim().split('\n');
+    
+    // Extract date and time from filename (format: game_log_YYYYMMDD_HHMMSS.jsonl)
+    const dateTimeMatch = filename.match(/game_log_(\d{8})_(\d{6})\.jsonl/);
+    let date = 'Unknown';
+    let time = 'Unknown';
+    
+    if (dateTimeMatch) {
+      const dateStr = dateTimeMatch[1]; // YYYYMMDD
+      const timeStr = dateTimeMatch[2]; // HHMMSS
+      
+      // Format date as YYYY-MM-DD
+      date = `${dateStr.slice(0, 4)}-${dateStr.slice(4, 6)}-${dateStr.slice(6, 8)}`;
+      
+      // Format time as HH:MM
+      time = `${timeStr.slice(0, 2)}:${timeStr.slice(2, 4)}`;
+    }
+    
+    // Look for game_setup event in the first few lines
+    for (const line of lines.slice(0, 5)) {
+      try {
+        const event = JSON.parse(line);
+        if (event.event_type === 'game_setup' && event.metadata) {
+          const playerCount = event.metadata.player_count || 0;
+          const model = event.metadata.model || 'unknown';
+          const friendlyModelName = getFriendlyModelName(model);
+          const title = `${playerCount} Players - ${friendlyModelName}`;
+          
+          // Extract characters in play from the game_state
+          const charactersInPlay: string[] = [];
+          if (event.game_state?.player_state) {
+            const characters = event.game_state.player_state
+              .map((player: any) => player.character)
+              .filter((char: string) => char && char !== 'unknown')
+              .sort((a: string, b: string) => a.localeCompare(b));
+            charactersInPlay.push(...characters);
+          }
+          
+          return {
+            filename,
+            playerCount,
+            model,
+            friendlyModelName,
+            title,
+            date,
+            time,
+            charactersInPlay
+          };
+        }
+      } catch (parseError) {
+        // Skip invalid JSON lines
+        continue;
+      }
+    }
+    
+    console.warn(`No game_setup event found in ${filename}`);
+    return null;
+  } catch (error) {
+    console.error(`Error extracting metadata from ${filename}:`, error);
+    return null;
+  }
+};
+
+export const loadGameEvents = async (filename: string = 'game_log_20250528_154356.jsonl'): Promise<GameEvent[]> => {
   try {
     // Use process.env.PUBLIC_URL to get the correct base path for deployment
     const basePath = process.env.PUBLIC_URL || '';
@@ -26,7 +137,8 @@ function processEvents(events: GameEvent[]): GameEvent[] {
       'player_setup', // This is usually just character assignment
       'phase_change',  // Remove phase_change events as they're redundant with phase headers
       'voting_round',  // Remove voting_round events as they're now integrated into nomination results
-      'voting'         // Remove individual voting events as they're now integrated into nomination results
+      'voting',        // Remove individual voting events as they're now integrated into nomination results
+      'storyteller_info' // Remove storyteller info events
     ];
     
     // Debug: Log any voting_round events we encounter
@@ -227,6 +339,7 @@ export function getCharacterColor(character: string): string {
     'Poisoner': '#F44336',      // Red
     'Spy': '#E91E63',           // Pink
     'Scarlet Woman': '#AD1457', // Dark Pink
+    'Scarlet_Woman': '#AD1457', // Dark Pink (underscore version)
     'Baron': '#D32F2F',         // Dark Red
     
     // Demons (Evil)
@@ -240,7 +353,7 @@ export function isEvilCharacter(character: string): boolean {
     // Demons
     'Imp',
     // Minions  
-    'Poisoner', 'Spy', 'Baron', 'Scarlet Woman'
+    'Poisoner', 'Spy', 'Baron', 'Scarlet Woman', 'Scarlet_Woman'
   ];
   return evilCharacters.includes(character);
 }
