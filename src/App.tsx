@@ -242,7 +242,7 @@ function GameView() {
           <div className="title-content">
             <h1>Claude plays <a href="https://bloodontheclocktower.com/" target="_blank" rel="noopener noreferrer">Blood on the Clocktower</a></h1>
             <div className="subtitle">
-              Created by <a href="https://www.linkedin.com/in/jamessullivan092/" target="_blank" rel="noopener noreferrer">James Sullivan</a>
+              Created by <a href="https://www.linkedin.com/in/jamessullivan092/" target="_blank" rel="noopener noreferrer">James Sullivan</a>. Not affiliated with The Pandemonium Institute.
             </div>
           </div>
           <div className="header-buttons">
