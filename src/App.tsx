@@ -451,7 +451,7 @@ function GameView() {
                     <strong>Butler:</strong> Each night, chooses a player and can only vote if that player votes Yes before it is their turn to vote
                   </div>
                   <div className="character-item">
-                    <strong>Drunk:</strong> Thinks they are a Townsfolk but they are Drunk. They Storyteller will treat them as if they are the Townsfolk they think they are but their ability does not work.
+                    <strong>Drunk:</strong> Thinks they are a Townsfolk character but they are the Drunk. The Storyteller will treat them as if they are the Townsfolk they think they are but their ability does not work and information they are given may be false.
                   </div>
                   <div className="character-item">
                     <strong>Recluse:</strong> Might register as Evil and as a Minion or Demon, even if dead
