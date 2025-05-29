@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import Timeline from './components/Timeline';
 import PlayerStatus from './components/PlayerStatus';
 import { loadGameEvents, extractGameMetadata, GameMetadata } from './gameData';
@@ -7,33 +8,47 @@ import './App.css';
 
 // Base game files list (we'll load metadata dynamically)
 const GAME_FILES = [
+  'game_log_20250528_221331.jsonl',
+  'game_log_20250528_215504.jsonl',
   'game_log_20250528_164924.jsonl',
   'game_log_20250528_162223.jsonl',
-  'game_log_20250528_154356.jsonl',
-  'game_log_20250527_233816.jsonl',
-  'game_log_20250527_220743.jsonl',
-  'game_log_20250527_204500.jsonl',
-  'game_log_20250526_223044.jsonl',
-  'game_log_20250526_204654.jsonl',
-  'game_log_20250526_152804.jsonl',
-  'game_log_20250526_125240.jsonl',
-  'game_log_20250525_161301.jsonl',
-  'game_log_20250525_133022.jsonl',
-  'game_log_20250524_202903.jsonl'
 ];
 
-function App() {
+// Component that handles the main game view with routing
+function GameView() {
+  const { gameId } = useParams<{ gameId?: string }>();
+  const navigate = useNavigate();
+
   const [gameEvents, setGameEvents] = useState<GameEvent[]>([]);
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showCharactersModal, setShowCharactersModal] = useState(false);
-  const [selectedGame, setSelectedGame] = useState(GAME_FILES[0]);
+  const [selectedGame, setSelectedGame] = useState('');
   const [showGameSelector, setShowGameSelector] = useState(false);
   const [timelineWidth, setTimelineWidth] = useState(60); // Percentage
   const [isResizing, setIsResizing] = useState(false);
-  const [highlightedPlayer, setHighlightedPlayer] = useState<string | null>(null);
+  const [highlightedPlayers, setHighlightedPlayers] = useState<string[]>([]);
   const [availableGames, setAvailableGames] = useState<GameMetadata[]>([]);
+
+  // Determine selected game from URL parameter or default to first game
+  useEffect(() => {
+    if (gameId) {
+      // Convert gameId back to filename
+      const filename = `game_log_${gameId}.jsonl`;
+      if (GAME_FILES.includes(filename)) {
+        setSelectedGame(filename);
+      } else {
+        // If invalid gameId, redirect to first game
+        const defaultGameId = GAME_FILES[0].replace('game_log_', '').replace('.jsonl', '');
+        navigate(`/game/${defaultGameId}`, { replace: true });
+      }
+    } else {
+      // No gameId in URL, redirect to first game
+      const defaultGameId = GAME_FILES[0].replace('game_log_', '').replace('.jsonl', '');
+      navigate(`/game/${defaultGameId}`, { replace: true });
+    }
+  }, [gameId, navigate]);
 
   // Load game metadata on component mount
   useEffect(() => {
@@ -58,6 +73,8 @@ function App() {
 
   useEffect(() => {
     const loadData = async () => {
+      if (!selectedGame) return; // Don't load if no game selected yet
+      
       try {
         setLoading(true);
         const events = await loadGameEvents(selectedGame);
@@ -78,12 +95,13 @@ function App() {
   };
 
   const handleGameSelect = (filename: string) => {
-    setSelectedGame(filename);
+    const gameId = filename.replace('game_log_', '').replace('.jsonl', '');
+    navigate(`/game/${gameId}`);
     setShowGameSelector(false); // Close the panel after selection
   };
 
-  const handlePlayerHighlight = (playerName: string | null) => {
-    setHighlightedPlayer(playerName);
+  const handlePlayerHighlight = (playerNames: string[] | null) => {
+    setHighlightedPlayers(playerNames || []);
   };
 
   // Handle mouse events for resizing
@@ -279,7 +297,7 @@ function App() {
           <PlayerStatus 
             players={currentEvent?.game_state?.player_state || currentEvent?.public_game_state?.player_state || []}
             reminderTokens={currentEvent?.game_state?.reminder_tokens || currentEvent?.public_game_state?.reminder_tokens}
-            highlightedPlayer={highlightedPlayer}
+            highlightedPlayers={highlightedPlayers}
           />
           
           <div className="nomination-status">
@@ -345,43 +363,30 @@ function App() {
               <button className="modal-close" onClick={() => setShowRulesModal(false)}>×</button>
             </div>
             <div className="modal-body">
-              <p>Blood on the Clocktower is a social deduction game similar to Werewolf (or Mafia). At the start of the game each player is secretly given a character that determines what team they are on and what special abilities they have. There can only be one of each character in the game. Players are either on the Good team or the Evil team. The Evil team members know who each other are but the Good team does not know who anyone but themselves are.</p>
+              <p>Blood on the Clocktower is a social deduction game similar to Werewolf (or Mafia). Each player is given a hidden character that determines if they are on the Good team or the Evil team. One player on the Evil team is the Demon. The Good team wins if they execute the Demon. The Evil team wins if there are only 2 players left alive.</p>
 
-              <h3>Storyteller</h3>
-              <p>The game is moderated by the Storyteller who is a neutral agent that will enforce the rules and give information to players. The Storyteller will also have decisions to make about things like what false information to give to players. The Storyteller maintains the complete game state inside of the Grimoire. This include what character each player is and what status effects they have.</p>
-
-              <h3>Objectives</h3>
-              <p>The Good team wins if they execute the Demon.</p>
-              <p>The Evil team wins if there are only 2 players left alive (and the Demon is still alive).</p>
-
-              <h3>Gameplay</h3>
+              <h3>Day & Night Phases</h3>
               <p>The game is played in rounds. Each round has a night phase and then a day phase. The game continues until either team wins.</p>
-              <p>During the day players can send messages to each other to persuade, strategize, coordinate, theorize, and share information. At the end of the day players will vote on who they want to nominate for execution and at the end of the day, if a player has been nominated, that player will die.</p>
-              <p>During the night the Storyteller will secretly give information to players based on their character's ability or allow them to secretly use their ability. All information at night is secret and only the player receiving the information or using their ability knows about it.</p>
+              <p>During the day players can send messages to each other and can nominate each other for execution. During the night, players are woken up to secretly receive information or use their character's ability. During the night, the Demon will pick one player to kill.</p>
 
               <h3>Nomination for Execution</h3>
-              <p>Towards the end of the day the Storyteller will allow players to nominate each other for execution. Each living player can only nominate one person per day and each person may only be nominated once per day. You can nominate any player including yourself or any other living or dead player.</p>
-              <p>During a nomination each player will vote starting with the player who is being nominated and proceeding left to right until all players have voted. Players can vote yes or no. When each player votes, they first get to see the votes of the players who voted before them.</p>
-              <p>The number of votes needed for a successful nomination is at least half of the living players rounded up. If a player is successfully nominated, future nominations will need to exceed the number of votes previously cast for that player to become the next nominee. If there is a tie, neither player is nominated and both players are safe for the day. At the end of the day, the currently nominated player will be executed. You do NOT learn what character players are when they die.</p>
-
-              <h3>Alignment</h3>
-              <p>The alignment of a player is the team they are on. A player can be on the Good team or the Evil team. By default, Townsfolk and Outsiders are Good players. Minions and the Demon are Evil players.</p>
-
-              <h3>Characters</h3>
-              <p>Each player has a character. Each character has an ability. A player's character is separate from their alignment. The moment a player dies, or becomes poisoned or drunk, their character's ability stops affecting the game.</p>
+              <p>Each living player may only nominate once per day and each player may only be nominated once per day. The votes needed to nominate are half of the living players rounded up. Once a player has been successfully nominated, they are placed on the chopping block and will be executed at the end of the day. Subsequent nominations will require more votes than the previous nominations to place a new player on the chopping block. In the event of a tie with the previous tally, both players are safe.</p>
 
               <h3>Roles</h3>
-              <p>The Good team is made up of Townsfolk and Outsiders. Townsfolk are Good players who have an ability that is helpful to the Good team. Outsiders are Good players who have an ability that is harmful to the Good team.</p>
-              <p>The Evil team is made up of one Demon and one to three Minions. The Demon is the most important Evil player and the player that the Good team is trying to kill. Minions are also Evil players who have an ability that is helpful to the Evil team. At the start of the game, the Demon is secretly told three good players that are not in play.</p>
+              <p>The characters on the Good team are either Townsfolk or Outsiders. Townsfolk are Good players who have an ability that is helpful to the Good team. Outsiders are Good players who have an ability that is harmful to the Good team.</p>
+              <p>The characters on the Evil team are either Minions or the Demon. The Demon is the most important Evil player and the player that the Good team is trying to kill. Minions are also Evil players who have an ability that is helpful to the Evil team. Evil players know who each other are and the Demon knows 3 Good characters that are not in play. Those Good characters can be used by the Evil team to bluff.</p>
 
               <h3>Dead Players</h3>
-              <p>Dead players are still in the game and can still talk to other players, but they no longer have their character's ability, they cannot nominate players for execution, and they only get one vote for the rest of the game.</p>
+              <p>Dead players are still in the game. They win or lose with their team and can send and receive messages as normal, but they lose their character ability, cannot nominate, and they only get one more vote for the rest of the game.</p>
+
+              <h3>Storyteller</h3>
+              <p>The Storyteller is a neutral agent that is running the game. It is their job to resolve any ambiguities in the rules.</p>
 
               <h3>Being Poisoned and Drunk</h3>
-              <p>Poisoned and Drunk are status effects that can be applied to players. They function the exact same way and a player will not know if they are Poisoned or Drunk. If a player is Poisoned or Drunk their character's ability will not work and any information that they receive from the Storyteller may be false.</p>
+              <p>If a player is Poisoned or Drunk, their character ability will not work and any information they recieve may be false. Players will not know if they are Poisoned or Drunk. Being Poisoned and being Drunk function exactly the same way.</p>
 
               <h3>Registers</h3>
-              <p>The rules and characters abilities sometimes talk about a player "registering" as good/evil, a particular role, or a particular character. This means that the game mechanics will treat them as the character, alignment, or role they are registering as, even if they are not that character, alignment, or role. For example, if a player "might" register as evil, then the Storyteller can decide to show another player a demon character when another player uses their ability to check what character they are.</p>
+              <p>Characters abilities sometimes talk about a player "registering" as good/evil, a particular role, or a particular character. This means that the game mechanics will treat them as the character, team, or role they are registering as, even if they are not that character, team, or role. For example, the Recluse "might" register as evil so if the Empath checks the Recluse, they will see them as an Evil player even though they are Good.</p>
             </div>
           </div>
         </div>
@@ -465,7 +470,7 @@ function App() {
                     <strong>Spy:</strong> Each night, sees the Grimoire (contains complete information about the game state); might register as Good and as a Townsfolk or Outsider
                   </div>
                   <div className="character-item">
-                    <strong>Scarlet_Woman:</strong> If 5+ players are alive and the Demon dies, becomes the Demon
+                    <strong>Scarlet Woman:</strong> If 5+ players are alive and the Demon dies, becomes the Demon
                   </div>
                   <div className="character-item">
                     <strong>Baron:</strong> Adds two extra Outsiders to the game during setup. The player count stays the same and Townsfolk are removed to make room
@@ -484,6 +489,18 @@ function App() {
         </div>
       )}
     </div>
+  );
+}
+
+// Main App component with routing
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<GameView />} />
+        <Route path="/game/:gameId" element={<GameView />} />
+      </Routes>
+    </Router>
   );
 }
 

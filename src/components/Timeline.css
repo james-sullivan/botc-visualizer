@@ -660,19 +660,83 @@
 
 .vote-count-summary {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 16px;
   font-size: 0.9rem;
+  margin: 8px 0;
+  padding: 8px 12px;
+  background-color: #1e1e1e;
+  border-radius: 6px;
+  border: 1px solid #3a3a3a;
 }
 
 .vote-count {
   font-weight: bold;
-  color: #fff;
+  color: #ffffff;
+  font-size: 1rem;
 }
 
 .required-votes {
-  color: #aaa;
-  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.required-to-tie {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.primary-vote-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.vote-count-large {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #4CAF50;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+.vote-label {
+  font-size: 1.1rem;
+  color: #cccccc;
+  font-weight: 500;
+}
+
+.vote-requirements-info {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.requirement-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.requirement-label {
+  font-size: 0.75rem;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.requirement-value {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffffff;
+  background-color: #3a3a3a;
+  padding: 4px 12px;
+  border-radius: 12px;
+  min-width: 32px;
+  text-align: center;
 }
 
 .vote-breakdown {
@@ -860,7 +924,39 @@
 }
 
 .execution-label {
-  color: #aaa;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Saint execution specific styles */
+.saint-execution {
+  background-color: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.saint-label {
+  color: #ff5722 !important;
+  font-weight: bold;
+}
+
+.game-over {
+  color: #f44336;
+  font-size: 1.1em;
+  text-shadow: 0 0 4px rgba(244, 67, 54, 0.5);
+}
+
+.saint-execution-description {
+  margin-top: 8px;
+  padding: 6px;
+  background-color: rgba(244, 67, 54, 0.05);
+  border-radius: 4px;
+  border-left: 3px solid #f44336;
+}
+
+.saint-execution-description .description-text {
+  color: #ffcccc;
   font-style: italic;
 }
 

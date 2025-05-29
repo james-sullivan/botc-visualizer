@@ -7,7 +7,7 @@ interface TimelineProps {
   events: GameEvent[];
   currentEventIndex: number;
   onEventClick: (index: number) => void;
-  onPlayerHighlight?: (playerName: string | null) => void;
+  onPlayerHighlight?: (playerNames: string[] | null) => void;
   showGameSelector: boolean;
   onToggleGameSelector: () => void;
   selectedGame: string;
@@ -88,57 +88,141 @@ const Timeline: React.FC<TimelineProps> = ({
     }
   };
 
-  // Helper function to get the initiating player for an event
-  const getInitiatingPlayer = (event: GameEvent): string | null => {
+  // Helper function to get the relevant players for an event
+  const getRelevantPlayers = (event: GameEvent): string[] => {
     switch (event.event_type) {
       case 'nomination':
       case 'nomination_complete':
       case 'nomination_result':
-        return event.metadata.nominator;
+        // Highlight both nominator and nominee
+        return [event.metadata.nominator, event.metadata.nominee].filter(Boolean);
       
       case 'message':
-        return event.metadata.sender === 'Storyteller' ? null : event.metadata.sender;
+        return event.metadata.sender === 'Storyteller' ? [] : [event.metadata.sender];
       
       case 'notes_update':
-        return event.metadata.player_name;
+        return [event.metadata.player_name];
       
       case 'player_pass':
-        return event.metadata.player_name;
+        return [event.metadata.player_name];
       
-      // Power events
+      // Power events - highlight the player using the power and any targets
       case 'slayer_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
       case 'poisoner_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
       case 'imp_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
       case 'empath_power':
+        // Highlight empath and their neighbors
+        const empathPlayers = [event.metadata.player_name];
+        if (event.metadata.neighbors) {
+          empathPlayers.push(...event.metadata.neighbors);
+        }
+        return empathPlayers.filter(Boolean);
+      
       case 'fortuneteller_power':
+        // Highlight fortune teller and their choices
+        const fortuneTellerPlayers = [event.metadata.player_name];
+        if (event.metadata.choices) {
+          fortuneTellerPlayers.push(...event.metadata.choices);
+        }
+        return fortuneTellerPlayers.filter(Boolean);
+      
       case 'spy_power':
+        return [event.metadata.player_name];
+      
       case 'washerwoman_power':
       case 'librarian_power':
       case 'investigator_power':
-      case 'chef_power':
-      case 'monk_power':
-      case 'ravenkeeper_power':
-      case 'undertaker_power':
-      case 'butler_power':
-      case 'virgin_power':
-        return event.metadata.player_name;
+        // Highlight the player using power and the shown players
+        const infoPlayers = [event.metadata.player_name];
+        if (event.metadata.shown_players) {
+          infoPlayers.push(...event.metadata.shown_players);
+        }
+        return infoPlayers.filter(Boolean);
       
-      // Events with no specific initiating player
+      case 'chef_power':
+        return [event.metadata.player_name];
+      
+      case 'monk_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
+      case 'ravenkeeper_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
+      case 'undertaker_power':
+        return [event.metadata.player_name, event.metadata.executed_player].filter(Boolean);
+      
+      case 'butler_power':
+        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+      
+      case 'virgin_power':
+        // For virgin power, highlight both the nominator and the virgin (nominee)
+        return [event.metadata.nominator, event.metadata.nominee].filter(Boolean);
+      
+      case 'scarlet_woman_transform':
+        // Highlight the new demon and the previous demon
+        return [event.metadata.player_name, event.metadata.previous_demon].filter(Boolean);
+      
+      // Execution and death events - highlight the affected player
+      case 'execution':
+      case 'saint_executed':
+        return [event.metadata.executed_player];
+      
+      case 'player_death':
+        return [event.metadata.player_name];
+      
+      case 'death_announcement':
+        // Return all dead players
+        return event.metadata.dead_players || [];
+      
+      case 'minion_info':
+        // Highlight the minion receiving info and the demon
+        const minionInfoPlayers = [];
+        if (event.participants && event.participants[1]) {
+          minionInfoPlayers.push(event.participants[1]); // The minion
+        }
+        if (event.metadata.demon) {
+          minionInfoPlayers.push(event.metadata.demon);
+        }
+        if (event.metadata.minions) {
+          // Add other minions (excluding the one receiving the info)
+          const otherMinions = event.metadata.minions
+            .map((minion: any) => typeof minion === 'string' ? minion : minion.name)
+            .filter((name: string) => name !== event.participants?.[1]);
+          minionInfoPlayers.push(...otherMinions);
+        }
+        return minionInfoPlayers.filter(Boolean);
+      
+      case 'demon_info':
+        // Highlight the demon and their minions
+        const demonInfoPlayers = [];
+        if (event.participants && event.participants[1]) {
+          demonInfoPlayers.push(event.participants[1]); // The demon
+        }
+        if (event.metadata.minions) {
+          const minionNames = event.metadata.minions.map((minion: any) => 
+            typeof minion === 'string' ? minion : minion.name
+          );
+          demonInfoPlayers.push(...minionNames);
+        }
+        return demonInfoPlayers.filter(Boolean);
+      
+      // Events with no specific relevant players
       case 'game_setup':
       case 'game_start':
       case 'round_start':
       case 'phase_change':
       case 'nominations_open':
-      case 'execution':
-      case 'player_death':
       case 'game_end':
-      case 'death_announcement':
-      case 'minion_info':
-      case 'demon_info':
       case 'notes_update_combined':
       case 'player_pass_combined':
       default:
-        return null;
+        return [];
     }
   };
 
@@ -204,6 +288,7 @@ const Timeline: React.FC<TimelineProps> = ({
       'nomination_result': '⚖️',
       'voting': '🗳️',
       'execution': '⚔️',
+      'saint_executed': '😇',
       'player_death': '💀',
       'message': '💬',
       'storyteller_info': '📢',
@@ -223,6 +308,7 @@ const Timeline: React.FC<TimelineProps> = ({
       'undertaker_power': '⚰️',
       'butler_power': '🤵',
       'virgin_power': '👸',
+      'scarlet_woman_transform': '👩‍🦰',
       'scarlet_woman': '👩‍🦰',
       'player_setup': '🎭',
       'notes_update': '📝',
@@ -246,7 +332,7 @@ const Timeline: React.FC<TimelineProps> = ({
     
     // Evil team powers (red)
     const evilPowers = [
-      'poisoner_power', 'imp_power', 'spy_power', 'scarlet_woman',
+      'poisoner_power', 'imp_power', 'spy_power', 'scarlet_woman_transform', 'scarlet_woman',
       'minion_info', 'demon_info'
     ];
     
@@ -374,9 +460,12 @@ const Timeline: React.FC<TimelineProps> = ({
             )}
             <div className="nomination-result-summary">
               <div className="vote-count-summary">
-                <span className="vote-count">{votes} votes</span>
+                <span className="vote-count">Vote count: {votes}</span>
                 {requiredVotes && (
-                  <span className="required-votes">(needed {requiredVotes})</span>
+                  <span className="required-votes">Needed to nominate: {requiredVotes}</span>
+                )}
+                {event.metadata.required_to_tie && (
+                  <span className="required-to-tie">Needed to tie: {event.metadata.required_to_tie}</span>
                 )}
               </div>
             </div>
@@ -600,6 +689,16 @@ const Timeline: React.FC<TimelineProps> = ({
             </div>
           </div>
         );
+      case 'saint_executed':
+        return (
+          <div className="event-details">
+            <div className="execution-summary">
+              <span className="execution-icon">😇</span>
+              <span className="executed-player">{formatPlayerName(event.metadata.executed_player, event)}</span>
+              <span className="execution-label">has been executed and the good team loses</span>
+            </div>
+          </div>
+        );
       case 'player_death':
         const killedByDemon = event.metadata.killed_by_demon;
         
@@ -773,9 +872,39 @@ const Timeline: React.FC<TimelineProps> = ({
             <div className="narrative-description">
               <span className="power-icon">{getEventIcon(event.event_type)}</span>
               <span className="narrative-text">
-                {formatPlayerName(event.metadata.player_name, event)} was nominated and their virgin power activated
+                {event.metadata.nominator && event.metadata.nominee ? (
+                  <>
+                    {formatPlayerName(event.metadata.nominator, event)} nominated {formatPlayerName(event.metadata.nominee, event)}. {formatPlayerName(event.metadata.nominator, event)} was executed by the Virgin ability
+                  </>
+                ) : (
+                  <>
+                    {formatPlayerName(event.metadata.player_name, event)} was nominated and their virgin power activated
+                  </>
+                )}
               </span>
             </div>
+          </div>
+        );
+      case 'scarlet_woman_transform':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">{getEventIcon(event.event_type)}</span>
+              <span className="narrative-text">
+                {formatPlayerName(event.metadata.player_name, event)} became the Demon through the Scarlet Woman ability
+                {event.metadata.previous_demon && (
+                  <span className="result-indicator">
+                    {' '}(after {formatPlayerName(event.metadata.previous_demon, event)} died)
+                  </span>
+                )}
+              </span>
+            </div>
+            {event.metadata.private_reasoning && (
+              <div className="reasoning-section private">
+                <div className="reasoning-label">Private Reasoning:</div>
+                <div className="reasoning-text">"{event.metadata.private_reasoning}"</div>
+              </div>
+            )}
           </div>
         );
       case 'message':
@@ -1282,8 +1411,8 @@ const Timeline: React.FC<TimelineProps> = ({
                 onMouseEnter={() => {
                   onEventClick(index);
                   if (onPlayerHighlight) {
-                    const initiatingPlayer = getInitiatingPlayer(event);
-                    onPlayerHighlight(initiatingPlayer);
+                    const relevantPlayers = getRelevantPlayers(event);
+                    onPlayerHighlight(relevantPlayers);
                   }
                 }}
                 onMouseLeave={() => {

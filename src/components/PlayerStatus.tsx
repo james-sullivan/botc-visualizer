@@ -6,10 +6,10 @@ import './PlayerStatus.css';
 interface PlayerStatusProps {
   players: PlayerState[];
   reminderTokens?: Record<string, string>;
-  highlightedPlayer?: string | null;
+  highlightedPlayers?: string[];
 }
 
-const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayer }) => {
+const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayers = [] }) => {
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -103,7 +103,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
     return (
       <div 
         key={player.name} 
-        className={`player-card ${!player.alive ? 'dead' : ''} ${highlightedPlayer === player.name ? 'highlighted' : ''}`}
+        className={`player-card ${!player.alive ? 'dead' : ''} ${highlightedPlayers.includes(player.name) ? 'highlighted' : ''}`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
