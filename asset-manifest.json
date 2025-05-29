@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/botc-visualizer/static/css/main.b2698d64.css",
-    "main.js": "/botc-visualizer/static/js/main.e3315185.js",
+    "main.css": "/botc-visualizer/static/css/main.a01327d4.css",
+    "main.js": "/botc-visualizer/static/js/main.a5734e4a.js",
     "static/js/453.001719c3.chunk.js": "/botc-visualizer/static/js/453.001719c3.chunk.js",
     "index.html": "/botc-visualizer/index.html",
-    "main.b2698d64.css.map": "/botc-visualizer/static/css/main.b2698d64.css.map",
-    "main.e3315185.js.map": "/botc-visualizer/static/js/main.e3315185.js.map",
+    "main.a01327d4.css.map": "/botc-visualizer/static/css/main.a01327d4.css.map",
+    "main.a5734e4a.js.map": "/botc-visualizer/static/js/main.a5734e4a.js.map",
     "453.001719c3.chunk.js.map": "/botc-visualizer/static/js/453.001719c3.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.b2698d64.css",
-    "static/js/main.e3315185.js"
+    "static/css/main.a01327d4.css",
+    "static/js/main.a5734e4a.js"
   ]
 }
