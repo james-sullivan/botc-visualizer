@@ -88,11 +88,19 @@
   transform: translateY(-2px);
 }
 
-.player-card.highlighted {
+.player-card.highlighted-originator {
   border-color: #FFD700;
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
   transform: translateY(-2px) scale(1.05);
   z-index: 10;
+}
+
+.player-card.highlighted-affected {
+  border-color: #00FFFF;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 10px rgba(0, 255, 255, 0.6), inset 0 0 5px rgba(0, 255, 255, 0.2);
+  transform: translateY(-2px) scale(1.05);
+  z-index: 10;
+  background-color: rgba(0, 255, 255, 0.05);
 }
 
 .seat-number {

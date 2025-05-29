@@ -28,7 +28,7 @@ function GameView() {
   const [showGameSelector, setShowGameSelector] = useState(false);
   const [timelineWidth, setTimelineWidth] = useState(60); // Percentage
   const [isResizing, setIsResizing] = useState(false);
-  const [highlightedPlayers, setHighlightedPlayers] = useState<string[]>([]);
+  const [highlightedPlayers, setHighlightedPlayers] = useState<{ originators: string[], affected: string[] }>({ originators: [], affected: [] });
   const [availableGames, setAvailableGames] = useState<GameMetadata[]>([]);
 
   // Determine selected game from URL parameter or default to first game
@@ -100,8 +100,8 @@ function GameView() {
     setShowGameSelector(false); // Close the panel after selection
   };
 
-  const handlePlayerHighlight = (playerNames: string[] | null) => {
-    setHighlightedPlayers(playerNames || []);
+  const handlePlayerHighlight = (playerHighlight: { originators: string[], affected: string[] } | null) => {
+    setHighlightedPlayers(playerHighlight || { originators: [], affected: [] });
   };
 
   // Handle mouse events for resizing

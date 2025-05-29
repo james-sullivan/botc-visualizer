@@ -7,7 +7,7 @@ interface TimelineProps {
   events: GameEvent[];
   currentEventIndex: number;
   onEventClick: (index: number) => void;
-  onPlayerHighlight?: (playerNames: string[] | null) => void;
+  onPlayerHighlight?: (playerHighlight: { originators: string[], affected: string[] } | null) => void;
   showGameSelector: boolean;
   onToggleGameSelector: () => void;
   selectedGame: string;
@@ -89,128 +89,183 @@ const Timeline: React.FC<TimelineProps> = ({
   };
 
   // Helper function to get the relevant players for an event
-  const getRelevantPlayers = (event: GameEvent): string[] => {
+  const getRelevantPlayers = (event: GameEvent): { originators: string[], affected: string[] } => {
+    console.log('getRelevantPlayers called for event:', event.event_type, 'metadata:', event.metadata);
+    
     switch (event.event_type) {
       case 'nomination':
       case 'nomination_complete':
       case 'nomination_result':
-        // Highlight both nominator and nominee
-        return [event.metadata.nominator, event.metadata.nominee].filter(Boolean);
+        // Nominator is the originator, nominee is affected
+        const nominationResult = {
+          originators: [event.metadata.nominator].filter(Boolean),
+          affected: [event.metadata.nominee].filter(Boolean)
+        };
+        console.log('Nomination highlighting:', nominationResult);
+        return nominationResult;
       
       case 'message':
-        return event.metadata.sender === 'Storyteller' ? [] : [event.metadata.sender];
+        // Sender is the originator (unless it's Storyteller)
+        return {
+          originators: event.metadata.sender === 'Storyteller' ? [] : [event.metadata.sender],
+          affected: []
+        };
       
       case 'notes_update':
-        return [event.metadata.player_name];
-      
       case 'player_pass':
-        return [event.metadata.player_name];
+        // Player updating notes or passing is the originator
+        return {
+          originators: [event.metadata.player_name],
+          affected: []
+        };
       
-      // Power events - highlight the player using the power and any targets
+      // Power events - distinguish between the user and their targets
       case 'slayer_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'poisoner_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'imp_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'empath_power':
-        // Highlight empath and their neighbors
-        const empathPlayers = [event.metadata.player_name];
-        if (event.metadata.neighbors) {
-          empathPlayers.push(...event.metadata.neighbors);
-        }
-        return empathPlayers.filter(Boolean);
+        // Empath is originator, neighbors are affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: event.metadata.neighbors || []
+        };
       
       case 'fortuneteller_power':
-        // Highlight fortune teller and their choices
-        const fortuneTellerPlayers = [event.metadata.player_name];
-        if (event.metadata.choices) {
-          fortuneTellerPlayers.push(...event.metadata.choices);
-        }
-        return fortuneTellerPlayers.filter(Boolean);
+        // Fortune teller is originator, choices are affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: event.metadata.choices || []
+        };
       
       case 'spy_power':
-        return [event.metadata.player_name];
+        // Spy is the originator, no one else affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: []
+        };
       
       case 'washerwoman_power':
       case 'librarian_power':
       case 'investigator_power':
-        // Highlight the player using power and the shown players
-        const infoPlayers = [event.metadata.player_name];
-        if (event.metadata.shown_players) {
-          infoPlayers.push(...event.metadata.shown_players);
-        }
-        return infoPlayers.filter(Boolean);
+        // Player using power is originator, shown players are affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: event.metadata.shown_players || []
+        };
       
       case 'chef_power':
-        return [event.metadata.player_name];
+        // Chef is the originator, no specific affected players
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: []
+        };
       
       case 'monk_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'ravenkeeper_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'undertaker_power':
-        return [event.metadata.player_name, event.metadata.executed_player].filter(Boolean);
+        // Undertaker is originator, executed player is affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.executed_player].filter(Boolean)
+        };
       
       case 'butler_power':
-        return [event.metadata.player_name, event.metadata.target].filter(Boolean);
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.target].filter(Boolean)
+        };
       
       case 'virgin_power':
-        // For virgin power, highlight both the nominator and the virgin (nominee)
-        return [event.metadata.nominator, event.metadata.nominee].filter(Boolean);
+        // For virgin power, nominator is originator, virgin (nominee) is affected
+        return {
+          originators: [event.metadata.nominator].filter(Boolean),
+          affected: [event.metadata.nominee].filter(Boolean)
+        };
       
       case 'scarlet_woman_transform':
-        // Highlight the new demon and the previous demon
-        return [event.metadata.player_name, event.metadata.previous_demon].filter(Boolean);
+        // New demon is originator, previous demon is affected
+        return {
+          originators: [event.metadata.player_name].filter(Boolean),
+          affected: [event.metadata.previous_demon].filter(Boolean)
+        };
       
-      // Execution and death events - highlight the affected player
+      // Execution and death events - no clear originator, just affected
       case 'execution':
       case 'saint_executed':
-        return [event.metadata.executed_player];
-      
       case 'player_death':
-        return [event.metadata.player_name];
+        return {
+          originators: [],
+          affected: [event.metadata.executed_player || event.metadata.player_name].filter(Boolean)
+        };
       
       case 'death_announcement':
-        // Return all dead players
-        return event.metadata.dead_players || [];
+        // No originator, all dead players are affected
+        return {
+          originators: [],
+          affected: event.metadata.dead_players || []
+        };
       
       case 'minion_info':
-        // Highlight the minion receiving info and the demon
-        const minionInfoPlayers = [];
-        if (event.participants && event.participants[1]) {
-          minionInfoPlayers.push(event.participants[1]); // The minion
-        }
+        // The minion receiving info is the originator, demon and other minions are affected
+        const minionReceivingInfo = event.participants?.[1];
+        const affectedMinions = [];
+        
         if (event.metadata.demon) {
-          minionInfoPlayers.push(event.metadata.demon);
+          affectedMinions.push(event.metadata.demon);
         }
         if (event.metadata.minions) {
-          // Add other minions (excluding the one receiving the info)
           const otherMinions = event.metadata.minions
             .map((minion: any) => typeof minion === 'string' ? minion : minion.name)
-            .filter((name: string) => name !== event.participants?.[1]);
-          minionInfoPlayers.push(...otherMinions);
+            .filter((name: string) => name !== minionReceivingInfo);
+          affectedMinions.push(...otherMinions);
         }
-        return minionInfoPlayers.filter(Boolean);
+        
+        return {
+          originators: minionReceivingInfo ? [minionReceivingInfo] : [],
+          affected: affectedMinions.filter(Boolean)
+        };
       
       case 'demon_info':
-        // Highlight the demon and their minions
-        const demonInfoPlayers = [];
-        if (event.participants && event.participants[1]) {
-          demonInfoPlayers.push(event.participants[1]); // The demon
-        }
+        // The demon receiving info is the originator, minions are affected
+        const demonReceivingInfo = event.participants?.[1];
+        const affectedForDemon = [];
+        
         if (event.metadata.minions) {
           const minionNames = event.metadata.minions.map((minion: any) => 
             typeof minion === 'string' ? minion : minion.name
           );
-          demonInfoPlayers.push(...minionNames);
+          affectedForDemon.push(...minionNames);
         }
-        return demonInfoPlayers.filter(Boolean);
+        
+        return {
+          originators: demonReceivingInfo ? [demonReceivingInfo] : [],
+          affected: affectedForDemon.filter(Boolean)
+        };
       
       // Events with no specific relevant players
       case 'game_setup':
@@ -222,7 +277,7 @@ const Timeline: React.FC<TimelineProps> = ({
       case 'notes_update_combined':
       case 'player_pass_combined':
       default:
-        return [];
+        return { originators: [], affected: [] };
     }
   };
 
@@ -1409,9 +1464,11 @@ const Timeline: React.FC<TimelineProps> = ({
                 className={`timeline-event indent-${indentLevel} ${index === currentEventIndex ? 'current' : ''} ${index < currentEventIndex ? 'past' : ''}`}
                 onClick={() => onEventClick(index)}
                 onMouseEnter={() => {
+                  console.log('Mouse entered event:', event.event_type);
                   onEventClick(index);
                   if (onPlayerHighlight) {
                     const relevantPlayers = getRelevantPlayers(event);
+                    console.log('Event:', event.event_type, 'Relevant players:', relevantPlayers);
                     onPlayerHighlight(relevantPlayers);
                   }
                 }}

@@ -6,10 +6,23 @@ import './PlayerStatus.css';
 interface PlayerStatusProps {
   players: PlayerState[];
   reminderTokens?: Record<string, string>;
-  highlightedPlayers?: string[];
+  highlightedPlayers?: { originators: string[], affected: string[] };
 }
 
-const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayers = [] }) => {
+const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayers = { originators: [], affected: [] } }) => {
+  // Debug logging
+  React.useEffect(() => {
+    if (highlightedPlayers.originators.length > 0 || highlightedPlayers.affected.length > 0) {
+      console.log('PlayerStatus highlighting:', highlightedPlayers);
+    }
+  }, [highlightedPlayers]);
+
+  // Test highlighting - temporarily highlight first two players for testing
+  const testHighlighting = false; // Set to true to test
+  const actualHighlighting = testHighlighting ? 
+    { originators: [players[0]?.name], affected: [players[1]?.name] } : 
+    highlightedPlayers;
+
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -103,7 +116,10 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
     return (
       <div 
         key={player.name} 
-        className={`player-card ${!player.alive ? 'dead' : ''} ${highlightedPlayers.includes(player.name) ? 'highlighted' : ''}`}
+        className={`player-card ${!player.alive ? 'dead' : ''} ${
+          actualHighlighting.originators.includes(player.name) ? 'highlighted-originator' : 
+          actualHighlighting.affected.includes(player.name) ? 'highlighted-affected' : ''
+        }`}
         style={{
           left: `${x}px`,
           top: `${y}px`,
