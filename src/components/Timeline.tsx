@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { GameEvent } from '../types';
-import { getPhaseColor, getPhaseIndentation, isEvilCharacter, GameMetadata, formatCharacterName } from '../gameData';
+import { getPhaseColor, getPhaseIndentation, isEvilCharacter, GameMetadata, formatCharacterName, getFriendlyModelName } from '../gameData';
 import './Timeline.css';
 
 interface TimelineProps {
@@ -24,19 +24,31 @@ const Timeline: React.FC<TimelineProps> = ({
   selectedGame,
   availableGames
 }) => {
-  // Debug: Check what events the Timeline component is receiving
-  React.useEffect(() => {
-    console.log('Timeline received events:', events.length);
-    const eventTypes = Array.from(new Set(events.map(e => e.event_type))).sort();
-    console.log('Timeline event types:', eventTypes);
-    
-    const votingRoundEvents = events.filter(e => e.event_type === 'voting_round');
-    if (votingRoundEvents.length > 0) {
-      console.error('ERROR: Timeline received voting_round events:', votingRoundEvents);
-    }
-  }, [events]);
   const timelineRef = useRef<HTMLDivElement>(null);
   const eventRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [openStates, setOpenStates] = useState<Record<number, { monologueOpen: boolean; jsonOpen: boolean }>>({});
+
+  const toggleMonologue = (index: number) => {
+    setOpenStates(prev => ({
+      ...prev,
+      [index]: {
+        // Ensure existing state for the other toggle is preserved
+        ...(prev[index] || { monologueOpen: false, jsonOpen: false }),
+        monologueOpen: !prev[index]?.monologueOpen,
+      }
+    }));
+  };
+
+  const toggleJson = (index: number) => {
+    setOpenStates(prev => ({
+      ...prev,
+      [index]: {
+        // Ensure existing state for the other toggle is preserved
+        ...(prev[index] || { monologueOpen: false, jsonOpen: false }),
+        jsonOpen: !prev[index]?.jsonOpen,
+      }
+    }));
+  };
 
   // Helper function to format player names with character info
   const formatPlayerName = (playerName: string, event: GameEvent) => {
@@ -61,48 +73,60 @@ const Timeline: React.FC<TimelineProps> = ({
   };
 
   // Helper function to format vote values
-  const formatVoteValue = (vote: string) => {
+  const formatVoteValue = (vote: string, isDead?: boolean) => {
+    let displayVote = '';
     switch (vote) {
       case 'Yes':
-        return '✅';
+        displayVote = '✅';
+        break;
       case 'No':
-        return '❌';
+        displayVote = '❌';
+        break;
       case 'Cant_Vote':
-        return '🤷';
+        displayVote = '🤷';
+        break;
       default:
-        return vote;
+        displayVote = vote;
     }
+    if (isDead && vote === 'Yes') {
+      displayVote += '👻';
+    }
+    return displayVote;
   };
 
   // Helper function to format vote display text
-  const formatVoteDisplayText = (vote: string) => {
+  const formatVoteDisplayText = (vote: string, isDead?: boolean) => {
+    let displayText = '';
     switch (vote) {
       case 'Yes':
-        return '✅ YES';
+        displayText = '✅ YES';
+        break;
       case 'No':
-        return '❌ NO';
+        displayText = '❌ NO';
+        break;
       case 'Cant_Vote':
-        return '🤷 CAN\'T VOTE';
+        displayText = '🤷 CAN\'T VOTE';
+        break;
       default:
-        return vote;
+        displayText = vote;
     }
+    if (isDead && vote === 'Yes') {
+      displayText += ' 👻';
+    }
+    return displayText;
   };
 
   // Helper function to get the relevant players for an event
   const getRelevantPlayers = (event: GameEvent): { originators: string[], affected: string[] } => {
-    console.log('getRelevantPlayers called for event:', event.event_type, 'metadata:', event.metadata);
-    
     switch (event.event_type) {
       case 'nomination':
       case 'nomination_complete':
       case 'nomination_result':
         // Nominator is the originator, nominee is affected
-        const nominationResult = {
+        return {
           originators: [event.metadata.nominator].filter(Boolean),
           affected: [event.metadata.nominee].filter(Boolean)
         };
-        console.log('Nomination highlighting:', nominationResult);
-        return nominationResult;
       
       case 'message':
         // Sender is the originator (unless it's Storyteller)
@@ -416,8 +440,8 @@ const Timeline: React.FC<TimelineProps> = ({
               <span className="setup-icon">🎮</span>
               <span className="setup-text">
                 Game Setup: {event.metadata.player_count} players
-                {event.metadata.script && ` • ${event.metadata.script}`}
-                {event.metadata.model && ` • Model: ${event.metadata.model}`}
+                {event.metadata.model && ` • ${getFriendlyModelName(event.metadata.model)}`}
+                {event.metadata.thinking_token_budget && ` • Thinking Budget: ${event.metadata.thinking_token_budget.toLocaleString()}`}
               </span>
             </div>
           </div>
@@ -528,14 +552,19 @@ const Timeline: React.FC<TimelineProps> = ({
               <div className="vote-breakdown">
                 <div className="vote-breakdown-header">Votes:</div>
                 <div className="compact-vote-list">
-                  {voteDetails.map((voteDetail: any, index: number) => (
-                    <div key={index} className={`compact-vote-item ${voteDetail.vote.toLowerCase().replace('_', '-')}`}>
-                      <span className="compact-voter-name">{formatPlayerName(voteDetail.voter, event)}</span>
-                      <span className={`compact-vote-value ${voteDetail.vote.toLowerCase().replace('_', '-')}`}>
-                        {formatVoteValue(voteDetail.vote)}
-                      </span>
-                    </div>
-                  ))}
+                  {voteDetails.map((voteDetail: any, index: number) => {
+                    const gameState = event.game_state || event.public_game_state;
+                    const voterPlayerState = gameState?.player_state?.find(p => p.name === voteDetail.voter);
+                    const isVoterDead = voterPlayerState ? !voterPlayerState.alive : false;
+                    return (
+                      <div key={index} className={`compact-vote-item ${voteDetail.vote.toLowerCase().replace('_', '-')}`}>
+                        <span className="compact-voter-name">{formatPlayerName(voteDetail.voter, event)}</span>
+                        <span className={`compact-vote-value ${voteDetail.vote.toLowerCase().replace('_', '-')}`}>
+                          {formatVoteValue(voteDetail.vote, isVoterDead)}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
                 <details className="voting-breakdown">
                   <summary>View Individual Votes and Reasoning</summary>
@@ -545,13 +574,16 @@ const Timeline: React.FC<TimelineProps> = ({
                       const isYesVote = voteValue === 'yes' || voteValue === 'true' || voteValue === '1';
                       const isNoVote = voteValue === 'no' || voteValue === 'false' || voteValue === '0';
                       const isCantVote = voteValue === 'cant_vote';
-                      
+                      const gameState = event.game_state || event.public_game_state;
+                      const voterPlayerState = gameState?.player_state?.find(p => p.name === voteDetail.voter);
+                      const isVoterDead = voterPlayerState ? !voterPlayerState.alive : false;
+
                       return (
                         <div key={index} className={`vote-item ${isYesVote ? 'yes' : isNoVote ? 'no' : isCantVote ? 'cant-vote' : 'other'}`}>
                           <div className="vote-header">
                             <span className="voter-name">{formatPlayerName(voteDetail.voter, event)}</span>
                             <span className={`vote-value ${isYesVote ? 'yes' : isNoVote ? 'no' : isCantVote ? 'cant-vote' : 'other'}`}>
-                              {formatVoteDisplayText(voteDetail.vote)}
+                              {formatVoteDisplayText(voteDetail.vote, isVoterDead)}
                             </span>
                           </div>
                           <div className="vote-reasoning-container">
@@ -1138,6 +1170,18 @@ const Timeline: React.FC<TimelineProps> = ({
                       <span className="stat-value">{apiCostSummary.total_cache_read_tokens.toLocaleString()}</span>
                     </div>
                   )}
+                  {apiCostSummary.total_tokens_saved_by_cache && (
+                    <div className="stat-item">
+                      <span className="stat-label">Tokens Saved by Cache:</span>
+                      <span className="stat-value">{apiCostSummary.total_tokens_saved_by_cache.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {apiCostSummary.total_cost_saved_by_cache_usd && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cost Saved by Cache:</span>
+                      <span className="stat-value">${apiCostSummary.total_cost_saved_by_cache_usd.toFixed(4)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1464,11 +1508,9 @@ const Timeline: React.FC<TimelineProps> = ({
                 className={`timeline-event indent-${indentLevel} ${index === currentEventIndex ? 'current' : ''} ${index < currentEventIndex ? 'past' : ''}`}
                 onClick={() => onEventClick(index)}
                 onMouseEnter={() => {
-                  console.log('Mouse entered event:', event.event_type);
                   onEventClick(index);
                   if (onPlayerHighlight) {
                     const relevantPlayers = getRelevantPlayers(event);
-                    console.log('Event:', event.event_type, 'Relevant players:', relevantPlayers);
                     onPlayerHighlight(relevantPlayers);
                   }
                 }}
@@ -1511,15 +1553,53 @@ const Timeline: React.FC<TimelineProps> = ({
                       <div className="event-description">{event.description}</div>
                     </>
                   )}
-                  <details className="event-json-details">
-                    <summary className="json-toggle">
-                      <span className="json-toggle-text">View JSON</span>
-                      <span className="json-toggle-arrow">▼</span>
-                    </summary>
-                    <div className="json-content">
-                      <pre>{JSON.stringify(event, null, 2)}</pre>
+                  
+                  <div className="event-inline-controls">
+                    {event.metadata.thinking && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMonologue(index);
+                        }}
+                        className={`control-toggle-button monologue-button ${openStates[index]?.monologueOpen ? 'open' : ''}`}
+                        aria-expanded={openStates[index]?.monologueOpen}
+                      >
+                        Internal Monologue <span className="toggle-arrow">{openStates[index]?.monologueOpen ? '▲' : '▼'}</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleJson(index);
+                      }}
+                      className={`control-toggle-button json-button ${openStates[index]?.jsonOpen ? 'open' : ''}`}
+                      aria-expanded={openStates[index]?.jsonOpen}
+                    >
+                      View JSON <span className="toggle-arrow">{openStates[index]?.jsonOpen ? '▲' : '▼'}</span>
+                    </button>
+                  </div>
+
+                  {openStates[index]?.monologueOpen && event.metadata.thinking && (
+                    <div className="event-monologue-content-wrapper">
+                      <div className="reasoning-content">
+                        <div className="reasoning-text">
+                          {event.metadata.thinking.split('\n').map((line: string, i: number) => (
+                            <div key={i} className="reasoning-line">
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </details>
+                  )}
+
+                  {openStates[index]?.jsonOpen && (
+                    <div className="event-json-content-wrapper">
+                      <div className="json-content">
+                        <pre>{JSON.stringify(event, null, 2)}</pre>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );

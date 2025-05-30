@@ -16,7 +16,7 @@ const MODEL_NAME_MAP: Record<string, string> = {
 };
 
 // Helper function to get friendly model name
-const getFriendlyModelName = (modelName: string): string => {
+export const getFriendlyModelName = (modelName: string): string => {
   return MODEL_NAME_MAP[modelName] || modelName;
 };
 
@@ -30,6 +30,7 @@ export interface GameMetadata {
   playerCount: number;
   model: string;
   friendlyModelName: string;
+  thinking_token_budget: number;
   title: string;
   date: string;
   time: string;
@@ -73,6 +74,7 @@ export const extractGameMetadata = async (filename: string): Promise<GameMetadat
         if (event.event_type === 'game_setup' && event.metadata) {
           const playerCount = event.metadata.player_count || 0;
           const model = event.metadata.model || 'unknown';
+          const thinking_token_budget = event.metadata.thinking_token_budget;
           const friendlyModelName = getFriendlyModelName(model);
           const title = `${playerCount} Players - ${friendlyModelName}`;
           
@@ -91,6 +93,7 @@ export const extractGameMetadata = async (filename: string): Promise<GameMetadat
             playerCount,
             model,
             friendlyModelName,
+            thinking_token_budget,
             title,
             date,
             time,
@@ -118,10 +121,30 @@ export const loadGameEvents = async (filename: string = 'game_log_20250528_15435
     const response = await fetch(`${basePath}/${filename}?t=${Date.now()}`);
     const text = await response.text();
     const lines = text.trim().split('\n');
+    
+    // Debug: Check the raw first line
+    console.log('First line from file:', lines[0]);
+    console.log('Filename being loaded:', filename);
+    
     const rawEvents = lines.map(line => JSON.parse(line) as GameEvent);
     console.log('Raw events loaded:', rawEvents.length);
+    
+    // Debug: Check the first event (game_setup) for thinking_token_budget
+    if (rawEvents.length > 0 && rawEvents[0].event_type === 'game_setup') {
+      console.log('Raw game_setup event metadata:', rawEvents[0].metadata);
+      console.log('thinking_token_budget in raw event:', rawEvents[0].metadata.thinking_token_budget);
+    }
+    
     const processedEvents = processEvents(rawEvents);
     console.log('Processed events:', processedEvents.length);
+    
+    // Debug: Check the first processed event for thinking_token_budget
+    const processedGameSetup = processedEvents.find(e => e.event_type === 'game_setup');
+    if (processedGameSetup) {
+      console.log('Processed game_setup event metadata:', processedGameSetup.metadata);
+      console.log('thinking_token_budget in processed event:', processedGameSetup.metadata.thinking_token_budget);
+    }
+    
     return processedEvents;
   } catch (error) {
     console.error('Error loading game events:', error);

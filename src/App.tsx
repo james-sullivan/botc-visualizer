@@ -8,6 +8,8 @@ import './App.css';
 
 // Base game files list (we'll load metadata dynamically)
 const GAME_FILES = [
+  'game_log_20250529_230635.jsonl',
+  'game_log_20250529_151447.jsonl',
   'game_log_20250528_221331.jsonl',
   'game_log_20250528_215504.jsonl',
   'game_log_20250528_164924.jsonl',
@@ -263,6 +265,20 @@ function GameView() {
         <div className="game-info">
           <span>Event {currentEventIndex + 1} of {gameEvents.length}</span>
           <span>Round {currentEvent.round_number} - {currentEvent.phase}</span>
+          {(() => {
+            const currentGameMetadata = availableGames.find(game => game.filename === selectedGame);
+            if (currentGameMetadata) {
+              return (
+                <span>
+                  {currentGameMetadata.friendlyModelName}
+                  {currentGameMetadata.thinking_token_budget && (
+                    <span> • Thinking Token Budget: {currentGameMetadata.thinking_token_budget.toLocaleString()}</span>
+                  )}
+                </span>
+              );
+            }
+            return null;
+          })()}
         </div>
       </div>
       
@@ -370,7 +386,7 @@ function GameView() {
               <p>During the day players can send messages to each other and can nominate each other for execution. During the night, players are woken up to secretly receive information or use their character's ability. During the night, the Demon will pick one player to kill.</p>
 
               <h3>Nomination for Execution</h3>
-              <p>Each living player may only nominate once per day and each player may only be nominated once per day. The votes needed to nominate are half of the living players rounded up. Once a player has been successfully nominated, they are placed on the chopping block and will be executed at the end of the day. Subsequent nominations will require more votes than the previous nominations to place a new player on the chopping block. In the event of a tie with the previous tally, both players are safe.</p>
+              <p>Each living player may nominate a player for execution once per day. The votes needed to nominate are half of the living players rounded up. Once a player has been successfully nominated, they are placed on the chopping block and will be executed at the end of the day. Subsequent nominations will require more votes than the previous nomination to place a new player on the chopping block. In the event of a tie with the previous tally, both players are safe.</p>
 
               <h3>Roles</h3>
               <p>The characters on the Good team are either Townsfolk or Outsiders. Townsfolk are Good players who have an ability that is helpful to the Good team. Outsiders are Good players who have an ability that is harmful to the Good team.</p>
@@ -380,7 +396,7 @@ function GameView() {
               <p>Dead players are still in the game. They win or lose with their team and can send and receive messages as normal, but they lose their character ability, cannot nominate, and they only get one more vote for the rest of the game.</p>
 
               <h3>Storyteller</h3>
-              <p>The Storyteller is a neutral agent that is running the game. It is their job to resolve any ambiguities in the rules.</p>
+              <p>The Storyteller is a neutral agent that is running the game. It is their job to resolve any ambiguities in the rules using their discretion.</p>
 
               <h3>Being Poisoned and Drunk</h3>
               <p>If a player is Poisoned or Drunk, their character ability will not work and any information they recieve may be false. Players will not know if they are Poisoned or Drunk. Being Poisoned and being Drunk function exactly the same way.</p>

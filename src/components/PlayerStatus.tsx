@@ -10,19 +10,6 @@ interface PlayerStatusProps {
 }
 
 const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayers = { originators: [], affected: [] } }) => {
-  // Debug logging
-  React.useEffect(() => {
-    if (highlightedPlayers.originators.length > 0 || highlightedPlayers.affected.length > 0) {
-      console.log('PlayerStatus highlighting:', highlightedPlayers);
-    }
-  }, [highlightedPlayers]);
-
-  // Test highlighting - temporarily highlight first two players for testing
-  const testHighlighting = false; // Set to true to test
-  const actualHighlighting = testHighlighting ? 
-    { originators: [players[0]?.name], affected: [players[1]?.name] } : 
-    highlightedPlayers;
-
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -97,32 +84,25 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
 
   const renderPlayerCard = (player: PlayerState, index: number) => {
     const totalPlayers = players.length;
-    const angle = (index * 360) / totalPlayers;
     
     // Dynamic sizing: base radius for 6 players, increase by 20px for each additional player
     const baseRadius = 192;
     const additionalRadius = Math.max(0, (totalPlayers - 6) * 20);
     const radius = baseRadius + additionalRadius;
     
-    // Dynamic container size based on radius
-    const containerSize = (radius + 100) * 2; // Add padding around the circle
-    const centerX = containerSize / 2;
-    const centerY = containerSize / 2;
-    
-    // Calculate position using trigonometry
-    const x = centerX + radius * Math.cos((angle - 90) * Math.PI / 180) - 72; // -72 to center the card (half of card width: 144px/2)
-    const y = centerY + radius * Math.sin((angle - 90) * Math.PI / 180) - 48; // -48 to center the card (approximate half of card height)
+    // Use the same geometry calculation as arrows
+    const cardGeometry = getPlayerCardGeometry(index, totalPlayers, radius);
     
     return (
       <div 
         key={player.name} 
         className={`player-card ${!player.alive ? 'dead' : ''} ${
-          actualHighlighting.originators.includes(player.name) ? 'highlighted-originator' : 
-          actualHighlighting.affected.includes(player.name) ? 'highlighted-affected' : ''
+          highlightedPlayers.originators.includes(player.name) ? 'highlighted-originator' : 
+          highlightedPlayers.affected.includes(player.name) ? 'highlighted-affected' : ''
         }`}
         style={{
-          left: `${x}px`,
-          top: `${y}px`,
+          left: `${cardGeometry.x}px`,
+          top: `${cardGeometry.y}px`,
         }}
       >
         <div className="seat-number">{index + 1}</div>
@@ -177,6 +157,152 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
     );
   };
 
+  // Infrastructure: Calculate the closest point on a rectangle to a given point
+  const getClosestPointOnRectangle = (
+    rectX: number, 
+    rectY: number, 
+    rectWidth: number, 
+    rectHeight: number, 
+    targetX: number, 
+    targetY: number
+  ) => {
+    // Clamp the target point to the rectangle bounds
+    const closestX = Math.max(rectX, Math.min(targetX, rectX + rectWidth));
+    const closestY = Math.max(rectY, Math.min(targetY, rectY + rectHeight));
+    
+    return { x: closestX, y: closestY };
+  };
+
+  // Calculate player card positions and dimensions
+  const getPlayerCardGeometry = (playerIndex: number, totalPlayers: number, radius: number) => {
+    const angle = (playerIndex * 360) / totalPlayers;
+    const containerSize = (radius + 100) * 2;
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
+    
+    const cardWidth = 144;
+    const cardHeight = 96;
+    
+    const cardX = centerX + radius * Math.cos((angle - 90) * Math.PI / 180) - cardWidth / 2;
+    const cardY = centerY + radius * Math.sin((angle - 90) * Math.PI / 180) - cardHeight / 2;
+    
+    return {
+      x: cardX,
+      y: cardY,
+      width: cardWidth,
+      height: cardHeight,
+      centerX: containerSize / 2,
+      centerY: containerSize / 2
+    };
+  };
+
+  // Calculate arrow paths using closest points
+  const calculateArrowPath = (fromIndex: number, toIndex: number, totalPlayers: number, radius: number) => {
+    const fromCard = getPlayerCardGeometry(fromIndex, totalPlayers, radius);
+    const toCard = getPlayerCardGeometry(toIndex, totalPlayers, radius);
+    
+    // Get closest points on each card to the circle center
+    const fromPoint = getClosestPointOnRectangle(
+      fromCard.x, 
+      fromCard.y, 
+      fromCard.width, 
+      fromCard.height,
+      fromCard.centerX,
+      fromCard.centerY
+    );
+    
+    const toPoint = getClosestPointOnRectangle(
+      toCard.x, 
+      toCard.y, 
+      toCard.width, 
+      toCard.height,
+      toCard.centerX,
+      toCard.centerY
+    );
+    
+    // Create a simple curved path
+    const midX = (fromPoint.x + toPoint.x) / 2;
+    const midY = (fromPoint.y + toPoint.y) / 2;
+    
+    // Pull control point toward center for a gentle curve
+    const controlX = fromCard.centerX + (midX - fromCard.centerX) * 0.6;
+    const controlY = fromCard.centerY + (midY - fromCard.centerY) * 0.6;
+    
+    return `M ${fromPoint.x} ${fromPoint.y} Q ${controlX} ${controlY} ${toPoint.x} ${toPoint.y}`;
+  };
+
+  const renderArrows = () => {
+    if (highlightedPlayers.originators.length === 0 || highlightedPlayers.affected.length === 0) {
+      return null;
+    }
+
+    const totalPlayers = players.length;
+    const baseRadius = 192;
+    const additionalRadius = Math.max(0, (totalPlayers - 6) * 20);
+    const radius = baseRadius + additionalRadius;
+    const containerSize = (radius + 100) * 2;
+
+    const arrows: React.JSX.Element[] = [];
+    
+    highlightedPlayers.originators.forEach(originatorName => {
+      const originatorIndex = players.findIndex(p => p.name === originatorName);
+      if (originatorIndex === -1) return;
+      
+      highlightedPlayers.affected.forEach((affectedName, affectedIdx) => {
+        const affectedIndex = players.findIndex(p => p.name === affectedName);
+        if (affectedIndex === -1) return;
+        
+        const pathData = calculateArrowPath(originatorIndex, affectedIndex, totalPlayers, radius);
+        
+        arrows.push(
+          <g key={`${originatorName}-${affectedName}`}>
+            <path
+              d={pathData}
+              stroke="#FFD700"
+              strokeWidth="2.5"
+              fill="none"
+              markerEnd="url(#arrowhead)"
+              opacity="0.9"
+              strokeLinecap="round"
+            />
+          </g>
+        );
+      });
+    });
+
+    return (
+      <svg
+        width={containerSize}
+        height={containerSize}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none',
+          zIndex: 5
+        }}
+      >
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+            markerUnits="strokeWidth"
+          >
+            <polygon
+              points="0 0, 10 3.5, 0 7"
+              fill="#FFD700"
+            />
+          </marker>
+        </defs>
+        {arrows}
+      </svg>
+    );
+  };
+
   return (
     <div className="player-status">
       <div className="teams-container">
@@ -191,10 +317,12 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
             className="players-grid"
             style={{
               width: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`,
-              height: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`
+              height: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`,
+              position: 'relative'
             }}
           >
             {players.map((player, index) => renderPlayerCard(player, index))}
+            {renderArrows()}
           </div>
         </div>
       </div>

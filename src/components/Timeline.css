@@ -1083,44 +1083,108 @@
   color: #F44336;
 }
 
-/* JSON Details Dropdown */
-.event-json-details {
-  margin-top: 6px;
-  border-top: 1px solid #4a4a4a;
-  padding-top: 4px;
-}
-
-.json-toggle {
+/* JSON Details Dropdown - Updated for inline buttons and separate content areas */
+.event-inline-controls {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  padding: 2px 0;
-  color: #aaa;
-  font-size: 0.75rem;
-  user-select: none;
-  transition: color 0.2s ease;
+  gap: 0; /* Buttons will be right next to each other */
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
-.json-toggle:hover {
+.control-toggle-button {
+  flex: 1; /* Make buttons share space if needed, but they should size to content */
+  background-color: #3a3a3a;
+  color: #ccc;
+  border: 1px solid #4a4a4a;
+  border-radius: 0; /* No border radius for tight fit */
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  text-align: center;
+  user-select: none;
+}
+
+.control-toggle-button:first-child {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-right-width: 0.5px; /* Shared border */
+}
+
+.control-toggle-button:last-child {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+  border-left-width: 0.5px; /* Shared border */
+}
+
+.control-toggle-button:hover {
+  background-color: #4a4a4a;
   color: #fff;
 }
 
-.json-toggle-text {
+.control-toggle-button.open {
+  background-color: #5a5a5a;
+  color: #fff;
   font-weight: 500;
 }
 
-.json-toggle-arrow {
+.toggle-arrow {
+  margin-left: 4px;
   font-size: 0.7rem;
-  transition: transform 0.2s ease;
 }
 
-.event-json-details[open] .json-toggle-arrow {
-  transform: rotate(180deg);
+.event-monologue-content-wrapper,
+.event-json-content-wrapper {
+  margin-top: 4px; /* Space between button row and content, or between stacked content */
 }
 
-.json-content {
-  margin-top: 4px;
+/* Remove old styles for event-controls-container and details/summary */
+.event-controls-container { /* This class is no longer used directly for this */
+  /* display: flex; */
+  /* gap: 8px; */
+  /* margin-top: 6px; */
+  /* border-top: 1px solid #4a4a4a; */
+  /* padding-top: 4px; */
+}
+
+.event-json-details, /* No longer <details> */
+.event-reasoning-details { /* No longer <details> */
+  /* flex: 1; */
+}
+
+.json-toggle, /* No longer <summary> */
+.reasoning-toggle { /* No longer <summary> */
+  /* display: flex; */
+  /* align-items: center; */
+  /* justify-content: space-between; */
+  /* cursor: pointer; */
+  /* padding: 2px 0; */
+  /* color: #aaa; */
+  /* font-size: 0.75rem; */
+  /* user-select: none; */
+  /* transition: color 0.2s ease; */
+}
+
+.json-toggle:hover, /* No longer <summary> */
+.reasoning-toggle:hover { /* No longer <summary> */
+  /* color: #fff; */
+}
+
+.json-toggle-text, /* No longer used */
+.reasoning-toggle-text { /* No longer used */
+  /* font-weight: 500; */
+}
+
+.json-toggle-arrow, /* No longer used */
+.reasoning-toggle-arrow { /* No longer used */
+  /* font-size: 0.7rem; */
+  /* transition: transform 0.2s ease; */
+}
+
+/* Retain these for the content display */
+.json-content,
+.reasoning-content {
+  margin-top: 0; /* Wrapper div handles top margin */
   background-color: #1a1a1a;
   border-radius: 3px;
   padding: 6px;
@@ -1137,6 +1201,20 @@
   color: #ddd;
   white-space: pre-wrap;
   word-wrap: break-word;
+}
+
+.reasoning-text {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: #ddd;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.reasoning-line {
+  margin-bottom: 4px;
 }
 
 /* Enhanced Game Setup and Start Styles */
