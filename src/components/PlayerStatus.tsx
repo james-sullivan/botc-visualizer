@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { PlayerState } from '../types';
 import { isEvilCharacter, getTeamColor, formatCharacterName } from '../gameData';
 import './PlayerStatus.css';
@@ -10,6 +10,29 @@ interface PlayerStatusProps {
 }
 
 const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, highlightedPlayers = { originators: [], affected: [] } }) => {
+  // Ref to container and player card elements for measuring dynamic sizes
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [cardBounds, setCardBounds] = useState<{ x: number; y: number; width: number; height: number; }[]>([]);
+
+  // Recompute card bounds whenever players or tokens change
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newBounds = players.map((_, idx) => {
+      const el = cardRefs.current[idx];
+      if (!el) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        x: rect.left - containerRect.left,
+        y: rect.top - containerRect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+    }).filter((b): b is { x: number; y: number; width: number; height: number } => b !== null);
+    setCardBounds(newBounds);
+  }, [players, reminderTokens, highlightedPlayers]);
+
   // Safety check for undefined players
   if (!players || players.length === 0) {
     return (
@@ -95,6 +118,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
     
     return (
       <div 
+        ref={el => { cardRefs.current[index] = el; }}
         key={player.name} 
         className={`player-card ${!player.alive ? 'dead' : ''} ${
           highlightedPlayers.originators.includes(player.name) ? 'highlighted-originator' : 
@@ -198,28 +222,33 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
 
   // Calculate arrow paths using closest points
   const calculateArrowPath = (fromIndex: number, toIndex: number, totalPlayers: number, radius: number) => {
+    // Base geometry for fallback
     const fromCard = getPlayerCardGeometry(fromIndex, totalPlayers, radius);
     const toCard = getPlayerCardGeometry(toIndex, totalPlayers, radius);
-    
-    // Get closest points on each card to the circle center
+    // Determine container center
+    const containerSize = (radius + 100) * 2;
+    const centerX = containerSize / 2;
+    const centerY = containerSize / 2;
+    // Use measured bounds if available, else fallback to static geometry
+    const fromRect = cardBounds[fromIndex] || { x: fromCard.x, y: fromCard.y, width: fromCard.width, height: fromCard.height };
+    const toRect = cardBounds[toIndex] || { x: toCard.x, y: toCard.y, width: toCard.width, height: toCard.height };
     const fromPoint = getClosestPointOnRectangle(
-      fromCard.x, 
-      fromCard.y, 
-      fromCard.width, 
-      fromCard.height,
-      fromCard.centerX,
-      fromCard.centerY
+      fromRect.x,
+      fromRect.y,
+      fromRect.width,
+      fromRect.height,
+      centerX,
+      centerY
     );
-    
     const toPoint = getClosestPointOnRectangle(
-      toCard.x, 
-      toCard.y, 
-      toCard.width, 
-      toCard.height,
-      toCard.centerX,
-      toCard.centerY
+      toRect.x,
+      toRect.y,
+      toRect.width,
+      toRect.height,
+      centerX,
+      centerY
     );
-    
+
     // Create a simple curved path
     const midX = (fromPoint.x + toPoint.x) / 2;
     const midY = (fromPoint.y + toPoint.y) / 2;
@@ -313,7 +342,8 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({ players, reminderTokens, hi
               {goodPlayers.length} Good, {evilPlayers.length} Evil
             </span>
           </div>
-          <div 
+          <div
+            ref={containerRef}
             className="players-grid"
             style={{
               width: `${(192 + Math.max(0, (players.length - 6) * 20) + 100) * 2}px`,

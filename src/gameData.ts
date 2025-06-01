@@ -5,6 +5,7 @@ const MODEL_NAME_MAP: Record<string, string> = {
   'claude-3-5-sonnet-20241022': 'Claude 3.5 Sonnet',
   'claude-3-5-haiku-20241022': 'Claude 3.5 Haiku',
   'claude-sonnet-4-20250514': 'Claude 4 Sonnet',
+  'claude-opus-4-20250514': 'Claude 4 Opus',
   'claude-3-sonnet-20240229': 'Claude 3 Sonnet',
   'claude-3-haiku-20240307': 'Claude 3 Haiku',
   'claude-3-opus-20240229': 'Claude 3 Opus',
@@ -161,7 +162,10 @@ function processEvents(events: GameEvent[]): GameEvent[] {
       'phase_change',  // Remove phase_change events as they're redundant with phase headers
       'voting_round',  // Remove voting_round events as they're now integrated into nomination results
       'voting',        // Remove individual voting events as they're now integrated into nomination results
-      'storyteller_info' // Remove storyteller info events
+      'storyteller_info', // Remove storyteller info events
+      'error',
+      'game_save',
+      'checkpoint'
     ];
     
     // Debug: Log any voting_round events we encounter

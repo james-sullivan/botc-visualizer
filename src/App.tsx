@@ -8,12 +8,18 @@ import './App.css';
 
 // Base game files list (we'll load metadata dynamically)
 const GAME_FILES = [
-  'game_log_20250529_230635.jsonl',
-  'game_log_20250529_151447.jsonl',
-  'game_log_20250528_221331.jsonl',
-  'game_log_20250528_215504.jsonl',
-  'game_log_20250528_164924.jsonl',
-  'game_log_20250528_162223.jsonl',
+  'game_log_20250601_012019.jsonl',
+  'game_log_20250531_132017.jsonl',
+  'game_log_20250531_135528.jsonl',
+  'game_log_20250530_225729.jsonl',
+  'game_log_20250530_224034.jsonl',
+  'game_log_20250530_222346.jsonl',
+  'game_log_20250530_211635.jsonl',
+  'game_log_20250530_141837.jsonl',
+  'game_log_20250530_163016.jsonl',
+  'game_log_20250530_170838.jsonl',
+  'game_log_20250530_193714.jsonl',
+  'game_log_20250530_201334.jsonl',
 ];
 
 // Component that handles the main game view with routing
@@ -32,6 +38,7 @@ function GameView() {
   const [isResizing, setIsResizing] = useState(false);
   const [highlightedPlayers, setHighlightedPlayers] = useState<{ originators: string[], affected: string[] }>({ originators: [], affected: [] });
   const [availableGames, setAvailableGames] = useState<GameMetadata[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   // Determine selected game from URL parameter or default to first game
   useEffect(() => {
@@ -141,7 +148,7 @@ function GameView() {
         document.body.style.userSelect = '';
       };
     }
-  }, [isResizing]);
+  }, [isResizing, handleMouseMove]);
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -169,6 +176,14 @@ function GameView() {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [currentEventIndex, gameEvents.length, showRulesModal, showCharactersModal]);
+
+  // Toggle a group's expanded state
+  const toggleGroupExpanded = (groupKey: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupKey]: !prev[groupKey]
+    }));
+  };
 
   if (loading) {
     return (
@@ -212,22 +227,116 @@ function GameView() {
           </button>
         </div>
         <div className="game-list">
-          {availableGames.map((game) => (
-            <div
-              key={game.filename}
-              className={`game-item ${selectedGame === game.filename ? 'selected' : ''}`}
-              onClick={() => handleGameSelect(game.filename)}
-            >
-              <div className="game-title">{game.title}</div>
-              <div className="game-characters">
-                {game.charactersInPlay.join(' • ')}
-              </div>
-              <div className="game-meta">
-                <span className="game-date">{game.date}</span>
-                <span className="game-time">{game.time}</span>
-              </div>
-            </div>
-          ))}
+          {/* Group games by player count and characters */}
+          {(() => {
+            // Create groups based on player count and characters
+            const groups: Record<string, GameMetadata[]> = {};
+            
+            availableGames.forEach(game => {
+              // Sort characters to ensure consistent grouping
+              const sortedChars = [...game.charactersInPlay].sort().join(',');
+              const groupKey = `${game.playerCount}-${sortedChars}`;
+              
+              if (!groups[groupKey]) {
+                groups[groupKey] = [];
+              }
+              
+              groups[groupKey].push(game);
+            });
+            
+            // Sort groups by player count first, then alphabetically by characters
+            const sortedGroupKeys = Object.keys(groups).sort((a, b) => {
+              const [countA] = a.split('-');
+              const [countB] = b.split('-');
+              
+              // Sort by player count first
+              if (countA !== countB) {
+                return parseInt(countA) - parseInt(countB);
+              }
+              
+              // Then by character list
+              return a.localeCompare(b);
+            });
+            
+            return sortedGroupKeys.map(groupKey => {
+              const games = groups[groupKey];
+              if (games.length === 0) return null;
+              
+              // Get the first game for group information
+              const firstGame = games[0];
+              const isExpanded = !!expandedGroups[groupKey];
+              
+              // Sort games within group by model name and then date
+              const sortedGames = [...games].sort((a, b) => {
+                // Special case: Opus models should be last
+                const aIsOpus = a.friendlyModelName.toLowerCase().includes('opus');
+                const bIsOpus = b.friendlyModelName.toLowerCase().includes('opus');
+                
+                if (aIsOpus && !bIsOpus) return 1; // Move Opus to the end
+                if (!aIsOpus && bIsOpus) return -1; // Keep non-Opus earlier
+                
+                // For two Opus models or two non-Opus models, sort normally
+                // Model first (for same type models)
+                if (a.friendlyModelName !== b.friendlyModelName) {
+                  return a.friendlyModelName.localeCompare(b.friendlyModelName);
+                }
+                // Then date
+                if (a.date !== b.date) {
+                  return a.date.localeCompare(b.date);
+                }
+                // Then time
+                return a.time.localeCompare(b.time);
+              });
+              
+              return (
+                <div key={groupKey} className="game-group">
+                  <div 
+                    className="game-group-header"
+                    onClick={() => toggleGroupExpanded(groupKey)}
+                    style={{ cursor: 'pointer', padding: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ color: 'white', fontWeight: 'bold' }}>
+                        {firstGame.playerCount} Players
+                      </div>
+                      <div style={{ marginLeft: '8px', color: 'white' }}>
+                        <span className="toggle-arrow">{isExpanded ? '▲' : '▼'}</span>
+                      </div>
+                    </div>
+                    <div style={{ color: 'white', fontSize: '0.9em' }}>
+                      {firstGame.charactersInPlay.join(' • ')}
+                    </div>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="game-group-content" style={{ paddingLeft: '16px' }}>
+                      {sortedGames.map(game => (
+                        <div
+                          key={game.filename}
+                          className={`game-item ${selectedGame === game.filename ? 'selected' : ''}`}
+                          onClick={() => handleGameSelect(game.filename)}
+                          style={{ 
+                            cursor: 'pointer', 
+                            margin: '10px 0',
+                            padding: '8px 12px',
+                            borderRadius: '4px',
+                            backgroundColor: selectedGame === game.filename ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                          }}
+                        >
+                          <div style={{ color: 'white', fontWeight: 'bold', marginBottom: '4px' }}>
+                            {game.friendlyModelName}
+                          </div>
+                          <div style={{ fontSize: '0.9em' }}>
+                            {game.date} {game.time}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
         </div>
       </div>
 
@@ -271,7 +380,7 @@ function GameView() {
               return (
                 <span>
                   {currentGameMetadata.friendlyModelName}
-                  {currentGameMetadata.thinking_token_budget && (
+                  {currentGameMetadata.thinking_token_budget > 0 && (
                     <span> • Thinking Token Budget: {currentGameMetadata.thinking_token_budget.toLocaleString()}</span>
                   )}
                 </span>

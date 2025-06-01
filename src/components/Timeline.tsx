@@ -300,6 +300,7 @@ const Timeline: React.FC<TimelineProps> = ({
       case 'game_end':
       case 'notes_update_combined':
       case 'player_pass_combined':
+      case 'early_day_end':
       default:
         return { originators: [], affected: [] };
     }
@@ -397,6 +398,7 @@ const Timeline: React.FC<TimelineProps> = ({
       'demon_info': '😈',
       'player_pass': '⏭️',
       'player_pass_combined': '⏭️',
+      'early_day_end': '🌅',
     };
     return icons[eventType] || '📝';
   };
@@ -426,6 +428,8 @@ const Timeline: React.FC<TimelineProps> = ({
       return '#F44336'; // Red
     } else if (setupEvents.includes(eventType)) {
       return '#4CAF50'; // Green
+    } else if (eventType === 'early_day_end') {
+      return '#FFC107'; // Sunset color
     } else {
       return '#000000'; // Black
     }
@@ -441,7 +445,7 @@ const Timeline: React.FC<TimelineProps> = ({
               <span className="setup-text">
                 Game Setup: {event.metadata.player_count} players
                 {event.metadata.model && ` • ${getFriendlyModelName(event.metadata.model)}`}
-                {event.metadata.thinking_token_budget && ` • Thinking Budget: ${event.metadata.thinking_token_budget.toLocaleString()}`}
+                {event.metadata.thinking_token_budget > 0 && ` • Thinking Budget: ${event.metadata.thinking_token_budget.toLocaleString()}`}
               </span>
             </div>
           </div>
@@ -1186,6 +1190,62 @@ const Timeline: React.FC<TimelineProps> = ({
               </div>
             )}
 
+            {apiCostSummary && apiCostSummary.cache_metrics && (
+              <div className="cache-stats-section">
+                <div className="stats-header">Cache Performance</div>
+                <div className="game-stats">
+                  {apiCostSummary.cache_metrics.cache_hits !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cache Hits:</span>
+                      <span className="stat-value">{apiCostSummary.cache_metrics.cache_hits}</span>
+                    </div>
+                  )}
+                  {apiCostSummary.cache_metrics.cache_misses !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cache Misses:</span>
+                      <span className="stat-value">{apiCostSummary.cache_metrics.cache_misses}</span>
+                    </div>
+                  )}
+                  {apiCostSummary.cache_metrics.cache_hits !== undefined && 
+                   apiCostSummary.cache_metrics.cache_misses !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">Cache Hit Rate:</span>
+                      <span className="stat-value">
+                        {(apiCostSummary.cache_metrics.cache_hits / 
+                         (apiCostSummary.cache_metrics.cache_hits + apiCostSummary.cache_metrics.cache_misses) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                  {apiCostSummary.total_cost_usd !== undefined &&
+                   apiCostSummary.total_cost_saved_by_cache_usd !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">% Cost Saved:</span>
+                      <span className="stat-value">
+                        {((apiCostSummary.total_cost_saved_by_cache_usd / 
+                         (apiCostSummary.total_cost_usd + apiCostSummary.total_cost_saved_by_cache_usd)) * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                  {apiCostSummary.cache_metrics.cache_tokens_saved && (
+                    <div className="stat-item">
+                      <span className="stat-label">Tokens Saved:</span>
+                      <span className="stat-value">{apiCostSummary.cache_metrics.cache_tokens_saved.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {apiCostSummary.cache_metrics.total_tokens !== undefined && 
+                   apiCostSummary.cache_metrics.cache_tokens_saved !== undefined && (
+                    <div className="stat-item">
+                      <span className="stat-label">% Tokens Saved:</span>
+                      <span className="stat-value">
+                        {(apiCostSummary.cache_metrics.cache_tokens_saved / 
+                         apiCostSummary.cache_metrics.total_tokens * 100).toFixed(2)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {event.metadata.final_player_states && (
               <div className="final-states-section">
                 <div className="stats-header">Final Player States</div>
@@ -1425,6 +1485,15 @@ const Timeline: React.FC<TimelineProps> = ({
                 </details>
                 );
               })}
+            </div>
+          </div>
+        );
+      case 'early_day_end':
+        return (
+          <div className="event-details">
+            <div className="narrative-description">
+              <span className="power-icon">🌅</span>
+              <span className="narrative-text">{event.description}</span>
             </div>
           </div>
         );
