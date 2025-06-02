@@ -1488,15 +1488,25 @@ const Timeline: React.FC<TimelineProps> = ({
             </div>
           </div>
         );
-      case 'early_day_end':
+      case 'early_day_end': {
+        const fullDesc = event.description;
+        let descText = fullDesc;
+        if (fullDesc.includes(':')) {
+          descText = fullDesc.split(':').slice(1).join(':').trim();
+        } else if (fullDesc.includes(' - ')) {
+          descText = fullDesc.split(' - ').slice(1).join(' - ').trim();
+        } else if (fullDesc.includes(',')) {
+          descText = fullDesc.substring(fullDesc.lastIndexOf(',') + 1).trim();
+        }
         return (
           <div className="event-details">
             <div className="narrative-description">
               <span className="power-icon">🌅</span>
-              <span className="narrative-text">{event.description}</span>
+              <span className="narrative-text">{descText}</span>
             </div>
           </div>
         );
+      }
       default:
         return null;
     }
