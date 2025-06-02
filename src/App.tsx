@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import Timeline from './components/Timeline';
 import PlayerStatus from './components/PlayerStatus';
-import { loadGameEvents, extractGameMetadata, GameMetadata } from './gameData';
+import { loadGameEvents, extractGameMetadata, GameMetadata, isEvilCharacter } from './gameData';
 import { GameEvent } from './types';
 import './App.css';
 
@@ -535,82 +535,82 @@ function GameView() {
                 <h3>Townsfolk (Good)</h3>
                 <div className="character-list">
                   <div className="character-item">
-                    <strong>Washerwoman:</strong> Starts knowing that 1 of 2 players is a particular Townsfolk
+                    <strong style={{ color: isEvilCharacter('Washerwoman') ? '#F44336' : '#2196F3' }}>Washerwoman:</strong> Starts knowing that 1 of 2 players is a particular Townsfolk
                   </div>
                   <div className="character-item">
-                    <strong>Librarian:</strong> Starts knowing that 1 of 2 players is a particular Outsider (or that zero are in play)
+                    <strong style={{ color: isEvilCharacter('Librarian') ? '#F44336' : '#2196F3' }}>Librarian:</strong> Starts knowing that 1 of 2 players is a particular Outsider (or that zero are in play)
                   </div>
                   <div className="character-item">
-                    <strong>Investigator:</strong> Starts knowing that 1 of 2 players is a particular Minion
+                    <strong style={{ color: isEvilCharacter('Investigator') ? '#F44336' : '#2196F3' }}>Investigator:</strong> Starts knowing that 1 of 2 players is a particular Minion
                   </div>
                   <div className="character-item">
-                    <strong>Chef:</strong> Starts knowing how many adjacent pairs of Evil players there are. (If three evil players are adjacent in a line, there are two pairs)
+                    <strong style={{ color: isEvilCharacter('Chef') ? '#F44336' : '#2196F3' }}>Chef:</strong> Starts knowing how many adjacent pairs of Evil players there are. (If three evil players are adjacent in a line, there are two pairs)
                   </div>
                   <div className="character-item">
-                    <strong>Empath:</strong> Each night, learns how many of their 2 alive neighbors are Evil
+                    <strong style={{ color: isEvilCharacter('Empath') ? '#F44336' : '#2196F3' }}>Empath:</strong> Each night, learns how many of their 2 alive neighbors are Evil
                   </div>
                   <div className="character-item">
-                    <strong>Fortune Teller:</strong> Each night, chooses 2 players and learns if either is a Demon. There is a good player who registers as a Demon.
+                    <strong style={{ color: isEvilCharacter('Fortune Teller') ? '#F44336' : '#2196F3' }}>Fortune Teller:</strong> Each night, chooses 2 players and learns if either is a Demon. There is a good player who registers as a Demon.
                   </div>
                   <div className="character-item">
-                    <strong>Undertaker:</strong> Each night (except the first), learns which character died by execution that day (players killed by the Demon are not considered executed)
+                    <strong style={{ color: isEvilCharacter('Undertaker') ? '#F44336' : '#2196F3' }}>Undertaker:</strong> Each night (except the first), learns which character died by execution that day (players killed by the Demon are not considered executed)
                   </div>
                   <div className="character-item">
-                    <strong>Monk:</strong> Each night (except the first), chooses a player to protect from the Demon's attack
+                    <strong style={{ color: isEvilCharacter('Monk') ? '#F44336' : '#2196F3' }}>Monk:</strong> Each night (except the first), chooses a player to protect from the Demon\'s attack
                   </div>
                   <div className="character-item">
-                    <strong>Ravenkeeper:</strong> If dies at night, wakes to choose a player and learn their character
+                    <strong style={{ color: isEvilCharacter('Ravenkeeper') ? '#F44336' : '#2196F3' }}>Ravenkeeper:</strong> If dies at night, wakes to choose a player and learn their character
                   </div>
                   <div className="character-item">
-                    <strong>Virgin:</strong> The first time nominated, if the nominator is a Townsfolk, the nominator dies immediately and the nomination continues.
+                    <strong style={{ color: isEvilCharacter('Virgin') ? '#F44336' : '#2196F3' }}>Virgin:</strong> The first time nominated, if the nominator is a Townsfolk, the nominator dies immediately and the nomination continues.
                   </div>
                   <div className="character-item">
-                    <strong>Slayer:</strong> Once per game during the day, publicly choose a player; if they're the Demon, they die
+                    <strong style={{ color: isEvilCharacter('Slayer') ? '#F44336' : '#2196F3' }}>Slayer:</strong> Once per game during the day, publicly choose a player; if they\'re the Demon, they die
                   </div>
                   <div className="character-item">
-                    <strong>Mayor:</strong> If only 3 players live and no execution occurs, their team wins; if they die at night, the Storyteller might choose another player to die instead
+                    <strong style={{ color: isEvilCharacter('Mayor') ? '#F44336' : '#2196F3' }}>Mayor:</strong> If only 3 players live and no execution occurs, their team wins; if they die at night, the Storyteller might choose another player to die instead
                   </div>
                   <div className="character-item">
-                    <strong>Soldier:</strong> Cannot be killed by the Demon
+                    <strong style={{ color: isEvilCharacter('Soldier') ? '#F44336' : '#2196F3' }}>Soldier:</strong> Cannot be killed by the Demon
                   </div>
                 </div>
 
                 <h3>Outsiders (Good)</h3>
                 <div className="character-list">
                   <div className="character-item">
-                    <strong>Butler:</strong> Each night, chooses a player and can only vote if that player votes Yes before it is their turn to vote
+                    <strong style={{ color: isEvilCharacter('Butler') ? '#F44336' : '#2196F3' }}>Butler:</strong> Each night, chooses a player and can only vote if that player votes Yes before it is their turn to vote
                   </div>
                   <div className="character-item">
-                    <strong>Drunk:</strong> Thinks they are a Townsfolk character but they are the Drunk. The Storyteller will treat them as if they are the Townsfolk they think they are but their ability does not work and information they are given may be false.
+                    <strong style={{ color: isEvilCharacter('Drunk') ? '#F44336' : '#2196F3' }}>Drunk:</strong> Thinks they are a Townsfolk character but they are the Drunk. The Storyteller will treat them as if they are the Townsfolk they think they are but their ability does not work and information they are given may be false.
                   </div>
                   <div className="character-item">
-                    <strong>Recluse:</strong> Might register as Evil and as a Minion or Demon, even if dead
+                    <strong style={{ color: isEvilCharacter('Recluse') ? '#F44336' : '#2196F3' }}>Recluse:</strong> Might register as Evil and as a Minion or Demon, even if dead
                   </div>
                   <div className="character-item">
-                    <strong>Saint:</strong> If executed, their team loses
+                    <strong style={{ color: isEvilCharacter('Saint') ? '#F44336' : '#2196F3' }}>Saint:</strong> If executed, their team loses
                   </div>
                 </div>
 
                 <h3>Minions (Evil)</h3>
                 <div className="character-list">
                   <div className="character-item">
-                    <strong>Poisoner:</strong> Each night they choose a player to poison for that night and the next day
+                    <strong style={{ color: isEvilCharacter('Poisoner') ? '#F44336' : '#2196F3' }}>Poisoner:</strong> Each night they choose a player to poison for that night and the next day
                   </div>
                   <div className="character-item">
-                    <strong>Spy:</strong> Each night, sees the Grimoire (contains complete information about the game state); might register as Good and as a Townsfolk or Outsider
+                    <strong style={{ color: isEvilCharacter('Spy') ? '#F44336' : '#2196F3' }}>Spy:</strong> Each night, sees the Grimoire (contains complete information about the game state); might register as Good and as a Townsfolk or Outsider
                   </div>
                   <div className="character-item">
-                    <strong>Scarlet Woman:</strong> If 5+ players are alive and the Demon dies, becomes the Demon
+                    <strong style={{ color: isEvilCharacter('Scarlet Woman') ? '#F44336' : '#2196F3' }}>Scarlet Woman:</strong> If 5+ players are alive and the Demon dies, becomes the Demon
                   </div>
                   <div className="character-item">
-                    <strong>Baron:</strong> Adds two extra Outsiders to the game during setup. The player count stays the same and Townsfolk are removed to make room
+                    <strong style={{ color: isEvilCharacter('Baron') ? '#F44336' : '#2196F3' }}>Baron:</strong> Adds two extra Outsiders to the game during setup. The player count stays the same and Townsfolk are removed to make room
                   </div>
                 </div>
 
                 <h3>Demon (Evil)</h3>
                 <div className="character-list">
                   <div className="character-item">
-                    <strong>Imp:</strong> Each night (except the first), chooses a player to kill; if they kill themselves, the Storyteller picks a Minion to become the new Imp
+                    <strong style={{ color: isEvilCharacter('Imp') ? '#F44336' : '#2196F3' }}>Imp:</strong> Each night (except the first), chooses a player to kill; if they kill themselves, the Storyteller picks a Minion to become the new Imp
                   </div>
                 </div>
               </div>
