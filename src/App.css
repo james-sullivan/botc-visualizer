@@ -677,3 +677,22 @@
     font-size: 0.8rem;
   }
 }
+
+.mobile-unsupported {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  text-align: center;
+  padding: 20px;
+}
+.mobile-unsupported h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+.mobile-unsupported p {
+  font-size: 1.2rem;
+}

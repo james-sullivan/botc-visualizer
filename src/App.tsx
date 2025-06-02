@@ -20,6 +20,10 @@ const GAME_FILES = [
   'game_log_20250530_170838.jsonl',
   'game_log_20250530_193714.jsonl',
   'game_log_20250530_201334.jsonl',
+  'game_log_20250601_114757.jsonl',
+  'game_log_20250601_122402.jsonl',
+  'game_log_20250601_131012.jsonl',
+  'game_log_20250601_201826.jsonl',
 ];
 
 // Component that handles the main game view with routing
@@ -619,6 +623,20 @@ function GameView() {
 
 // Main App component with routing
 function App() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
+  }, []);
+
+  if (isMobile) {
+    return (
+      <div className="mobile-unsupported">
+        <h2>Unsupported Device</h2>
+        <p>This website does not support mobile devices. Please use a desktop browser.</p>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <Routes>
