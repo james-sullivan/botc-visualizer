@@ -1,4 +1,4 @@
-# Blood on the Clocktower Visualizer
+# Claude Plays Blood on the Clocktower
 
 A React & TypeScript single-page application for visualizing game logs from the social deduction game *Blood on the Clocktower*.
 
