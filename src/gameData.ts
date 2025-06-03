@@ -117,18 +117,40 @@ export const extractGameMetadata = async (filename: string): Promise<GameMetadat
 
 export const loadGameEvents = async (filename: string = 'game_log_20250528_154356.jsonl'): Promise<GameEvent[]> => {
   try {
-    // Use process.env.PUBLIC_URL to get the correct base path for deployment
     const basePath = process.env.PUBLIC_URL || '';
     const response = await fetch(`${basePath}/${filename}?t=${Date.now()}`);
+
+    if (!response.ok) {
+      console.error(`Error fetching ${filename}: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
     const text = await response.text();
-    const lines = text.trim().split('\n');
+
+    if (!text || text.trim() === '') {
+      console.error(`Fetched empty content for ${filename}. Status: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const lines = text.trim().split('\n').filter(line => line.trim() !== '');
     
     // Debug: Check the raw first line
-    console.log('First line from file:', lines[0]);
+    console.log('First line from file:', lines.length > 0 ? lines[0] : '[EMPTY AFTER FILTERING]');
     console.log('Filename being loaded:', filename);
-    
-    const rawEvents = lines.map(line => JSON.parse(line) as GameEvent);
-    console.log('Raw events loaded:', rawEvents.length);
+    console.log('Number of non-empty lines to parse:', lines.length);
+
+    const rawEvents = lines.map((line, index) => {
+      try {
+        return JSON.parse(line) as GameEvent;
+      } catch (e: any) {
+        console.error(`Error parsing JSON on line ${index + 1} of the processed content (original file line might differ):`, line);
+        console.error(`Parse error:`, e);
+        // Return a special marker or null, or re-throw if you want to halt processing
+        return null; // Or throw e;
+      }
+    }).filter(event => event !== null) as GameEvent[]; // Filter out lines that failed to parse
+
+    console.log('Raw events loaded (after filtering out parse errors):', rawEvents.length);
     
     // Debug: Check the first event (game_setup) for thinking_token_budget
     if (rawEvents.length > 0 && rawEvents[0].event_type === 'game_setup') {

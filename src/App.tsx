@@ -25,7 +25,8 @@ const GAME_FILES = [
   'game_log_20250601_131012.jsonl',
   'game_log_20250601_201826.jsonl',
   'game_log_20250601_234518.jsonl',
-  'game_log_20250602_230550.jsonl'
+  'game_log_20250602_230550.jsonl',
+  'game_log_20250531_164020.jsonl'
 ];
 
 // Component that handles the main game view with routing
@@ -566,7 +567,7 @@ function GameView() {
                     <strong style={{ color: isEvilCharacter('Virgin') ? '#F44336' : '#2196F3' }}>Virgin:</strong> The first time nominated, if the nominator is a Townsfolk, the nominator dies immediately and the nomination continues.
                   </div>
                   <div className="character-item">
-                    <strong style={{ color: isEvilCharacter('Slayer') ? '#F44336' : '#2196F3' }}>Slayer:</strong> Once per game during the day, publicly choose a player; if they\'re the Demon, they die
+                    <strong style={{ color: isEvilCharacter('Slayer') ? '#F44336' : '#2196F3' }}>Slayer:</strong> Once per game during the day, publicly choose a player; if they're the Demon, they die
                   </div>
                   <div className="character-item">
                     <strong style={{ color: isEvilCharacter('Mayor') ? '#F44336' : '#2196F3' }}>Mayor:</strong> If only 3 players live and no execution occurs, their team wins; if they die at night, the Storyteller might choose another player to die instead
