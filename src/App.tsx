@@ -25,6 +25,7 @@ const GAME_FILES = [
   'game_log_20250601_131012.jsonl',
   'game_log_20250601_201826.jsonl',
   'game_log_20250601_234518.jsonl',
+  'game_log_20250602_230550.jsonl'
 ];
 
 // Component that handles the main game view with routing
