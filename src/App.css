@@ -337,6 +337,25 @@
 }
 
 .header-button:active {
+  background-color: #45a049; /* Darker green */
+  transform: translateY(0);
+}
+
+.header-button-orange, .header-button-orange:visited {
+  background-color: #FF8C00; /* DarkOrange */
+  color: white;
+  text-decoration: none;
+}
+
+.header-button-orange:hover {
+  background-color: #FFA500; /* Orange */
+  transform: translateY(-1px);
+  color: white;
+  text-decoration: none;
+}
+
+.header-button-orange:active {
+  background-color: #CD6600; /* Darker Orange */
   transform: translateY(0);
 }
 

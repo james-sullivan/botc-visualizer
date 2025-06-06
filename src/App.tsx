@@ -376,21 +376,29 @@ function GameView() {
             >
               Character Reference
             </button>
+            <a
+              href="https://open.substack.com/pub/jamessullivan092/p/claude-plays-blood-on-the-clocktower?r=yubo3&utm_campaign=post&utm_medium=web&showWelcomeOnShare=false"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="header-button"
+              style={{ backgroundColor: '#FF8C00' }}
+              onMouseOver={e => e.currentTarget.style.backgroundColor = '#FFA500'}
+              onMouseOut={e => e.currentTarget.style.backgroundColor = '#FF8C00'}
+            >
+              Game Analysis
+            </a>
           </div>
         </div>
         <div className="game-info">
-          <span>Event {currentEventIndex + 1} of {gameEvents.length}</span>
-          <span>Round {currentEvent.round_number} - {currentEvent.phase}</span>
           {(() => {
             const currentGameMetadata = availableGames.find(game => game.filename === selectedGame);
             if (currentGameMetadata) {
+              const info = [currentGameMetadata.friendlyModelName];
+              if (currentGameMetadata.thinking_token_budget > 0) {
+                info.push(`Thinking Token Budget: ${currentGameMetadata.thinking_token_budget.toLocaleString()}`);
+              }
               return (
-                <span>
-                  {currentGameMetadata.friendlyModelName}
-                  {currentGameMetadata.thinking_token_budget > 0 && (
-                    <span> • Thinking Token Budget: {currentGameMetadata.thinking_token_budget.toLocaleString()}</span>
-                  )}
-                </span>
+                <span>{info.join(' • ')}</span>
               );
             }
             return null;
